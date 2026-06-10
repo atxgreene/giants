@@ -136,7 +136,22 @@ func _tick_timers(delta: float) -> void:
 			post_dash_t = 0.28
 
 func _update_aim() -> void:
-	if using_controller:
+	if Game.touch_mode:
+		# Touch: auto-aim the nearest living enemy; fall back to move direction.
+		var best: Node2D = null
+		var best_d := 560.0
+		for e in get_tree().get_nodes_in_group("enemies"):
+			if not is_instance_valid(e) or e.get("dead") or e.get("passive"):
+				continue
+			var d: float = global_position.distance_to(e.global_position)
+			if d < best_d:
+				best_d = d
+				best = e
+		if best != null:
+			aim_dir = (best.global_position - global_position).normalized()
+		elif move_dir.length() > 0.1:
+			aim_dir = move_dir.normalized()
+	elif using_controller:
 		var stick := Input.get_vector("aim_left", "aim_right", "aim_up", "aim_down")
 		if stick.length() > 0.3:
 			aim_dir = stick.normalized()
@@ -178,7 +193,13 @@ func _try_interact() -> void:
 		best.call("try_interact", self)
 
 func _update_movement(delta: float) -> void:
-	move_dir = Input.get_vector("move_left", "move_right", "move_up", "move_down") if not input_locked else Vector2.ZERO
+	if input_locked:
+		move_dir = Vector2.ZERO
+	elif Game.touch_mode:
+		var tc := get_tree().get_first_node_in_group("touch_controls")
+		move_dir = (tc.get("move_vec") as Vector2) if tc != null else Vector2.ZERO
+	else:
+		move_dir = Input.get_vector("move_left", "move_right", "move_up", "move_down")
 	if dashing:
 		velocity = dash_dir * DASH_SPEED
 	elif state == "attack":
@@ -308,9 +329,10 @@ func _try_seal() -> void:
 	var cfg: Dictionary = weapon["seal"]
 	seal_cd_t = float(cfg["cd"])
 	var cast_range := float(cfg["cast_range"])
-	var target := global_position + aim_dir * minf(cast_range,
-		global_position.distance_to(get_global_mouse_position()) if not using_controller else cast_range * 0.6)
-	BindingSeal.spawn(get_parent(), target, cfg)
+	var cast_dist := cast_range * 0.6
+	if not using_controller and not Game.touch_mode:
+		cast_dist = minf(cast_range, global_position.distance_to(get_global_mouse_position()))
+	BindingSeal.spawn(get_parent(), global_position + aim_dir * cast_dist, cfg)
 
 func _try_ultimate() -> void:
 	if ult_charge < 100.0:

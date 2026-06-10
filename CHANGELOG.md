@@ -5,6 +5,30 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versioning
 follows [Semantic Versioning](https://semver.org/) (`0.x` = pre-release:
 minor = feature drop, patch = fixes/balance).
 
+## [0.3.0] — 2026-06-10 — "The Witness Goes Anywhere"
+
+### Web & mobile
+- **Playable in the browser**: single-threaded WASM export (no special
+  headers required — works on GitHub Pages, iOS Safari, and Android
+  browsers). Live at the project site under `/play/`.
+- **Touch controls**: dynamic virtual joystick (lower-left), action buttons
+  (attack, heavy, crescent, dash, seal, ultimate, interact) with cooldown
+  rings, and a corner pause button. Appears automatically on touchscreens;
+  desktops never see it.
+- **Touch auto-aim**: on touch devices the Witness aims at the nearest
+  living enemy, falling back to movement direction; Binding Seal casts at
+  fixed range.
+- Landscape orientation lock on handhelds; shorter hub-music loop on web
+  for faster WASM startup; dialogue tap-debounce for touch.
+
+### Infrastructure
+- **Continuous web deployment**: every push to `main` exports the web build
+  in CI and deploys landing page + game to GitHub Pages (Vercel-style
+  push-to-deploy, on GitHub's free tier).
+- Fixed the v0.2.0 release pipeline (export templates path under Actions'
+  HOME override; removed Windows rcedit-dependent metadata). Desktop
+  binaries now build correctly on version tags.
+
 ## [0.2.0] — 2026-06-10 — "The Illuminated Desert"
 
 ### Graphics & feel

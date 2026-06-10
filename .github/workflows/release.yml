@@ -20,6 +20,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install export templates
+        # The container ships templates under /root, but Actions overrides
+        # HOME to /github/home — link them where Godot will look.
+        run: |
+          mkdir -p ~/.local/share/godot/export_templates
+          ln -sfn /root/.local/share/godot/export_templates/4.3.stable ~/.local/share/godot/export_templates/4.3.stable
+
       - name: Import assets
         run: godot --headless --import || true
 

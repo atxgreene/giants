@@ -75,9 +75,16 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 		_advance()
 
+var _advance_guard := 0
+
 func _advance() -> void:
 	if line_idx >= lines.size():
 		return
+	# On touch, one tap can arrive as both an action and an emulated click.
+	var now := Time.get_ticks_msec()
+	if now - _advance_guard < 200:
+		return
+	_advance_guard = now
 	var full := str(lines[line_idx].get("text", ""))
 	if text_label.text.length() < full.length():
 		text_label.text = full
