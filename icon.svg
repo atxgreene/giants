@@ -1,1 +1,63 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128"><rect width="128" height="128" rx="20" fill="#120f16"/><circle cx="64" cy="64" r="44" fill="none" stroke="#d4af5a" stroke-width="4"/><circle cx="64" cy="64" r="32" fill="none" stroke="#8a6a30" stroke-width="2"/><path d="M64 16 L71 54 L64 112 L57 54 Z" fill="#e8c87a"/><path d="M50 60 L78 60 L74 68 L54 68 Z" fill="#a87c34"/><circle cx="64" cy="64" r="9" fill="#5ab0ff"/><circle cx="64" cy="64" r="4" fill="#dff0ff"/></svg>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <!-- Deep esoteric background -->
+  <rect width="128" height="128" rx="18" ry="18" fill="#0d0a12"/>
+  <!-- Outer divine seal ring (gold) -->
+  <circle cx="64" cy="64" r="59" fill="none" stroke="#d4af5a" stroke-width="4"/>
+  <circle cx="64" cy="64" r="55" fill="none" stroke="#8a6a30" stroke-width="1.8" opacity="0.65"/>
+  <!-- Subtle outer rune ticks for Enochian/seal feel -->
+  <g stroke="#d4af5a" stroke-width="2.2" stroke-opacity="0.35">
+    <line x1="64" y1="8" x2="64" y2="14"/>
+    <line x1="64" y1="114" x2="64" y2="120"/>
+    <line x1="8" y1="64" x2="14" y2="64"/>
+    <line x1="114" y1="64" x2="120" y2="64"/>
+    <line x1="22" y1="22" x2="27" y2="27"/>
+    <line x1="101" y1="101" x2="106" y2="106"/>
+    <line x1="22" y1="106" x2="27" y2="101"/>
+    <line x1="101" y1="22" x2="106" y2="27"/>
+  </g>
+  <!-- Inner dark field with faint mystical gradient hint -->
+  <circle cx="64" cy="64" r="49" fill="#161220"/>
+  <!-- Soft atmospheric glow layer (purple-indigo mystery) -->
+  <circle cx="64" cy="64" r="44" fill="none" stroke="#3f2a5c" stroke-width="10" opacity="0.35"/>
+  <!-- Central Witness Eye / Divine Orb -->
+  <circle cx="64" cy="58" r="20" fill="#221a30"/>
+  <circle cx="64" cy="58" r="16" fill="none" stroke="#4a9cff" stroke-width="2.8"/>
+  <circle cx="64" cy="58" r="11.5" fill="#0f1f3a"/>
+  <!-- Luminous iris / pupil -->
+  <circle cx="64" cy="58" r="7" fill="#4a9cff"/>
+  <circle cx="64" cy="58" r="3" fill="#e6f4ff"/>
+  <!-- Highlight dot for life -->
+  <circle cx="60" cy="55" r="1.4" fill="#ffffff" opacity="0.9"/>
+  <!-- The Flaming Sword of Witness (vertical through center) -->
+  <!-- Blade body (tapered, golden) -->
+  <path d="M64 18 L72 52 L69 96 L59 96 L56 52 Z" fill="#e8c87a" stroke="#a87c34" stroke-width="1.8"/>
+  <!-- Central ridge / holy light on blade -->
+  <line x1="64" y1="22" x2="64" y2="93" stroke="#fff5cc" stroke-width="2.2" opacity="0.75"/>
+  <!-- Flame licks along edges (holy fire / Azazel temptation contrast) -->
+  <path d="M72 52 Q76 62 73 78" fill="none" stroke="#ff7030" stroke-width="3" opacity="0.9"/>
+  <path d="M56 52 Q52 62 55 78" fill="none" stroke="#ff7030" stroke-width="3" opacity="0.9"/>
+  <!-- Extra flame embers / tongues -->
+  <circle cx="74" cy="60" r="4" fill="#ff8c3a" opacity="0.85"/>
+  <circle cx="54" cy="64" r="3.5" fill="#ff8c3a" opacity="0.8"/>
+  <circle cx="64" cy="45" r="3.2" fill="#ffcc66" opacity="0.65"/>
+  <circle cx="67" cy="82" r="2.8" fill="#ff8c3a" opacity="0.75"/>
+  <!-- Ornate crossguard / hilt -->
+  <rect x="46" y="49" width="36" height="5.5" rx="1.5" fill="#8a6a30" stroke="#d4af5a" stroke-width="1.2"/>
+  <!-- Guard jewels / accents -->
+  <circle cx="46" cy="51.75" r="4" fill="#a87c34"/>
+  <circle cx="82" cy="51.75" r="4" fill="#a87c34"/>
+  <circle cx="46" cy="51.75" r="1.8" fill="#d4af5a"/>
+  <circle cx="82" cy="51.75" r="1.8" fill="#d4af5a"/>
+  <!-- Pommel base with binding seal motif -->
+  <circle cx="64" cy="100" r="8" fill="#2a1f38" stroke="#d4af5a" stroke-width="2"/>
+  <circle cx="64" cy="100" r="4" fill="#4a9cff" opacity="0.85"/>
+  <!-- Subtle binding chains hinting at Fall of the Giants / binding theme -->
+  <path d="M50 108 Q57 114 64 108 Q71 114 78 108" fill="none" stroke="#6a5a3a" stroke-width="2.2" opacity="0.55"/>
+  <path d="M52 111 Q58 116 64 111 Q70 116 76 111" fill="none" stroke="#6a5a3a" stroke-width="1.6" opacity="0.4"/>
+  <!-- Small cardinal seal dots for 4 archangels / structure -->
+  <circle cx="36" cy="38" r="2.2" fill="#d4af5a" opacity="0.55"/>
+  <circle cx="92" cy="38" r="2.2" fill="#d4af5a" opacity="0.55"/>
+  <circle cx="36" cy="90" r="2.2" fill="#d4af5a" opacity="0.55"/>
+  <circle cx="92" cy="90" r="2.2" fill="#d4af5a" opacity="0.55"/>
+</svg>
