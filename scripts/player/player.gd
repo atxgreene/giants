@@ -79,6 +79,11 @@ func _input(event: InputEvent) -> void:
 		using_controller = true
 	elif event is InputEventMouseMotion or event is InputEventMouseButton:
 		using_controller = false
+	elif event is InputEventScreenTouch or event is InputEventScreenDrag:
+		# Touch devices use TouchControls + auto-aim (Game.touch_mode).
+		# Godot's built-in emulate_mouse_from_touch already covers UI taps,
+		# so no manual touch-to-mouse synthesis here (it would double-fire).
+		using_controller = false
 
 func _physics_process(delta: float) -> void:
 	anim_t += delta
