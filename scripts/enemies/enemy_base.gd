@@ -321,6 +321,9 @@ func on_death() -> void:
 
 func col(c: Color) -> Color:
 	var white := clampf(flash_t * 8.0, 0.0, 1.0)
+	# anticipation flash in the last moments of a windup
+	if state == "windup" and windup_progress() > 0.82:
+		white = maxf(white, 0.45 + 0.25 * sin(anim_t * 40.0))
 	var out := c.lerp(Color.WHITE, white)
 	if burn_t > 0.0:
 		out = out.lerp(Color(1.0, 0.5, 0.1), 0.25 + 0.15 * sin(anim_t * 18.0))
@@ -330,11 +333,29 @@ func col(c: Color) -> Color:
 
 func _draw() -> void:
 	_draw_telegraph()
-	# shadow
-	draw_set_transform(Vector2(0, hit_radius * 0.55), 0.0, Vector2(1.0, 0.4))
-	draw_circle(Vector2.ZERO, hit_radius * 0.9, Color(0, 0, 0, 0.3))
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	_draw_body()
+	Painter.shadow(self, hit_radius * 0.95, 1.7, 0.3)
+	if state == "spawn" and not dead:
+		# rise out of the sand: scale in + dust offset
+		var k := clampf(1.0 - st / 0.45, 0.15, 1.0)
+		draw_set_transform(Vector2(0, (1.0 - k) * 14.0), 0.0, Vector2(k, k))
+		_draw_body()
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		var dust := Color(0.6, 0.4, 0.3, (1.0 - k) * 0.7)
+		draw_set_transform(Vector2(0, hit_radius * 0.5), 0.0, Vector2(1.0, 0.4))
+		draw_arc(Vector2.ZERO, hit_radius * (0.8 + k * 0.6), 0, TAU, 16, dust, 3.0)
+		draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	else:
+		# hit reaction: tiny scale punch while flashing
+		if flash_t > 0.0 and not dead:
+			var punch := 1.0 + flash_t * 0.6
+			draw_set_transform(Vector2(0, hit_radius * (1.0 - punch)), 0.0, Vector2(punch, punch))
+			_draw_body()
+			draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		else:
+			_draw_body()
+	if elite and not dead:
+		Painter.rune_ring(self, Vector2.ZERO, hit_radius + 12.0,
+			Color(0.95, 0.8, 0.35, 0.45 + 0.15 * sin(anim_t * 4.0)), 8, anim_t * 1.2, 1.4)
 	_draw_status()
 
 func _draw_status() -> void:
@@ -430,10 +451,11 @@ func _draw_humanoid(bob: float, scale_k: float) -> void:
 		Vector2(0, -18 * scale_k + bob), Vector2(8 * scale_k * facing, -10 * scale_k + bob),
 		Vector2(9 * scale_k * facing, 8 * scale_k), Vector2(-9 * scale_k * facing, 8 * scale_k),
 		Vector2(-7 * scale_k * facing, -10 * scale_k + bob)])
-	draw_colored_polygon(pts, c)
+	Painter.outlined(self, pts, c)
+	# ragged hem shading
+	draw_line(Vector2(-8 * scale_k * facing, 6 * scale_k), Vector2(8 * scale_k * facing, 6 * scale_k), c.darkened(0.25), 2.0)
 	draw_circle(Vector2(1 * facing, -22 * scale_k + bob), 5.5 * scale_k, c.darkened(0.15))
-	# ember eyes
-	draw_circle(Vector2(3 * facing, -23 * scale_k + bob), 1.4, Color(1.0, 0.45, 0.15))
+	Painter.ember(self, Vector2(3 * facing, -23 * scale_k + bob), 1.4)
 
 func _draw_brute(bob: float) -> void:
 	var c := col(body_color)
@@ -441,7 +463,11 @@ func _draw_brute(bob: float) -> void:
 		Vector2(0, -26 + bob), Vector2(16 * facing, -18 + bob), Vector2(18 * facing, 4),
 		Vector2(10 * facing, 12), Vector2(-10 * facing, 12), Vector2(-18 * facing, 4),
 		Vector2(-16 * facing, -18 + bob)])
-	draw_colored_polygon(pts, c)
+	Painter.outlined(self, pts, c, 1.8)
+	# riveted iron plates
+	draw_line(Vector2(-14 * facing, -8 + bob), Vector2(14 * facing, -8 + bob), c.darkened(0.3), 2.0)
+	for rx in [-10.0, 0.0, 10.0]:
+		draw_circle(Vector2(rx * facing, -8 + bob), 1.5, c.lightened(0.25))
 	# pauldrons
 	draw_circle(Vector2(14 * facing, -18 + bob), 7.0, c.darkened(0.25))
 	draw_circle(Vector2(-14 * facing, -18 + bob), 7.0, c.darkened(0.25))
@@ -466,7 +492,13 @@ func _draw_bloodling(bob: float) -> void:
 	var pts := PackedVector2Array([
 		Vector2(0, -16 + bob), Vector2(13 * facing, -6 + bob), Vector2(10 * facing, 10),
 		Vector2(-10 * facing, 10), Vector2(-13 * facing, -6 + bob)])
-	draw_colored_polygon(pts, c)
+	Painter.outlined(self, pts, c)
+	# bone spurs along the spine
+	for i in 3:
+		var sx := (-6.0 + 6.0 * i) * facing
+		draw_colored_polygon(PackedVector2Array([
+			Vector2(sx, -14 + bob - i), Vector2(sx + 3, -20 + bob - i * 2), Vector2(sx + 5, -13 + bob - i)]),
+			Color(0.85, 0.78, 0.68))
 	# long arms
 	draw_line(Vector2(10 * facing, -6 + bob), Vector2(20 * facing, 8), c.darkened(0.1), 4.0)
 	draw_line(Vector2(-10 * facing, -6 + bob), Vector2(-18 * facing, 8), c.darkened(0.1), 4.0)
@@ -511,17 +543,26 @@ func _draw_hound(bob: float) -> void:
 	var leg := sin(anim_t * 14.0) * 4.0
 	draw_line(Vector2(6 * facing, -4), Vector2(8 * facing + leg, 4), c.darkened(0.2), 2.5)
 	draw_line(Vector2(-6 * facing, -4), Vector2(-8 * facing - leg, 4), c.darkened(0.2), 2.5)
+	# ember mane + tail
+	for i in 3:
+		var mp := Vector2((-2.0 + 5.0 * i) * facing, -16 + bob * 0.4)
+		draw_circle(mp, 2.0 + sin(anim_t * 10.0 + i * 2.0), Color(0.5, 0.95, 0.35, 0.6))
+	draw_line(Vector2(-12 * facing, -10), Vector2(-20 * facing, -16 + sin(anim_t * 6.0) * 3.0), c.darkened(0.15), 2.5)
 	# corruption glow
-	var glow := Color(0.4, 0.9, 0.3, 0.25 + 0.1 * sin(anim_t * 8.0))
-	draw_circle(Vector2(0, -8), 14.0, glow)
+	Painter.glow(self, Vector2(0, -8), 16.0, Color(0.4, 0.9, 0.3, 0.3), 2)
+	Painter.ember(self, Vector2(14 * facing, -13 + bob * 0.5), 1.3, Color(0.6, 1.0, 0.4))
 
 func _draw_priest(bob: float) -> void:
 	var c := col(body_color)
 	var pts := PackedVector2Array([
 		Vector2(0, -30 + bob), Vector2(11 * facing, -18 + bob), Vector2(13 * facing, 12),
 		Vector2(-13 * facing, 12), Vector2(-11 * facing, -18 + bob)])
-	draw_colored_polygon(pts, c)
+	Painter.outlined(self, pts, c, 1.8)
+	# anvil emblem on the chest
+	draw_rect(Rect2(-4 * facing - 2, -12 + bob, 8, 3), Color(0.25, 0.2, 0.18))
+	draw_rect(Rect2(-2, -9 + bob, 4, 4), Color(0.25, 0.2, 0.18))
 	draw_circle(Vector2(1 * facing, -34 + bob), 6.0, Color(0.2, 0.16, 0.14))
+	Painter.ember(self, Vector2(2 * facing, -35 + bob), 1.5, Color(1.0, 0.7, 0.25))
 	# floating shard halo
 	for i in 4:
 		var a := anim_t * 1.6 + TAU * i / 4.0

@@ -1,6 +1,5 @@
 # Godot
 .godot/
 *.import
-export.cfg
-export_presets.cfg
+build/
 .DS_Store

@@ -107,6 +107,41 @@ func ring(pos: Vector2, color: Color, r_from: float, r_to: float, dur := 0.4) ->
 	r.z_index = 45
 	t.add_child(r)
 
+## Screen-space vignette + warm grade for the 2.5D look. Add once per screen.
+func attach_vignette(parent: Node) -> void:
+	var layer := CanvasLayer.new()
+	layer.layer = 55
+	var rect := TextureRect.new()
+	var grad := Gradient.new()
+	grad.set_color(0, Color(0, 0, 0, 0.0))
+	grad.set_color(1, Color(0.02, 0.01, 0.03, 0.42))
+	grad.add_point(0.62, Color(0, 0, 0, 0.0))
+	var tex := GradientTexture2D.new()
+	tex.gradient = grad
+	tex.fill = GradientTexture2D.FILL_RADIAL
+	tex.fill_from = Vector2(0.5, 0.5)
+	tex.fill_to = Vector2(0.5, 0.0)
+	tex.width = 512
+	tex.height = 512
+	rect.texture = tex
+	rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	rect.stretch_mode = TextureRect.STRETCH_SCALE
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(rect)
+	parent.add_child(layer)
+
+## Fading afterimage ghost (dash trails).
+func ghost(pos: Vector2, facing: float, color := Color(0.45, 0.55, 0.85)) -> void:
+	var t := _target()
+	if t == null:
+		return
+	var g := DashGhost.new()
+	g.position = pos
+	g.facing = facing
+	g.color = color
+	g.z_index = -1
+	t.add_child(g)
+
 func flash_screen(color := Color(1, 1, 1, 0.35), dur := 0.25) -> void:
 	var layer := CanvasLayer.new()
 	layer.layer = 90
@@ -146,6 +181,28 @@ class DamageNumber extends Node2D:
 		modulate.a = clampf(life / 0.3, 0.0, 1.0)
 		if life <= 0.0:
 			queue_free()
+
+class DashGhost extends Node2D:
+	var facing := 1.0
+	var color := Color(0.45, 0.55, 0.85)
+	var life := 0.22
+	var max_life := 0.22
+
+	func _process(delta: float) -> void:
+		life -= delta
+		queue_redraw()
+		if life <= 0.0:
+			queue_free()
+
+	func _draw() -> void:
+		var a := clampf(life / max_life, 0.0, 1.0)
+		var c := color
+		c.a = 0.4 * a
+		draw_colored_polygon(PackedVector2Array([
+			Vector2(0, -24), Vector2(10 * facing, -14), Vector2(12 * facing, 8),
+			Vector2(-12 * facing, 8), Vector2(-8 * facing, -14)]), c)
+		c.a = 0.55 * a
+		draw_circle(Vector2(2 * facing, -28), 6.0, c)
 
 class SlashArc extends Node2D:
 	var dir := Vector2.RIGHT

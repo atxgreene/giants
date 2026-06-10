@@ -235,6 +235,17 @@ func die() -> void:
 func _draw_body() -> void:
 	var hover := sin(anim_t * 2.2) * 4.0
 	var c := col(body_color)
+	# wing membranes — radiant fans shading from gold to rust
+	for side in [-1.0, 1.0]:
+		var root := Vector2(0, -34 + hover)
+		var fan := PackedVector2Array([root])
+		for i in 6:
+			var ma: float = -PI * 0.5 + side * (0.3 + 0.16 * i) + sin(anim_t * 1.5) * 0.05
+			fan.append(root + Vector2.from_angle(ma) * (54.0 - i * 4.0))
+		var mem := Color(0.85, 0.55, 0.25, 0.22)
+		if desperate:
+			mem = Color(1.0, 0.35, 0.15, 0.28)
+		draw_colored_polygon(fan, mem)
 	# corrupted radiant wings — two fans of blades
 	for side in [-1.0, 1.0]:
 		for i in 5:

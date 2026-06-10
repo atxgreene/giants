@@ -111,11 +111,16 @@ func on_death() -> void:
 func _draw_body() -> void:
 	var c := col(body_color)
 	var breathe := sin(anim_t * 1.8) * 3.0
+	# molten heat bleeding up from whatever lies beneath
+	Painter.glow(self, Vector2(0, 26), 80.0, Color(1.0, 0.4, 0.1, 0.16 + 0.05 * sin(anim_t * 2.5)), 3)
 	# half-buried torso
 	var torso := PackedVector2Array([
 		Vector2(-58, 20), Vector2(-50, -38 + breathe), Vector2(-26, -62 + breathe),
 		Vector2(26, -62 + breathe), Vector2(50, -38 + breathe), Vector2(58, 20)])
-	draw_colored_polygon(torso, c)
+	Painter.outlined(self, torso, c, 2.2)
+	# stone-skin cracks
+	draw_line(Vector2(-30, -50 + breathe), Vector2(-18, -30 + breathe), c.darkened(0.35), 2.0)
+	draw_line(Vector2(24, -54 + breathe), Vector2(34, -34 + breathe), c.darkened(0.35), 2.0)
 	# sand mound at base
 	draw_set_transform(Vector2(0, 22), 0.0, Vector2(1.0, 0.35))
 	draw_circle(Vector2.ZERO, 72.0, Color(0.55, 0.3, 0.2))

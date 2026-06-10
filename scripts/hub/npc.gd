@@ -56,6 +56,16 @@ func _draw() -> void:
 			_draw_gate()
 
 func _draw_angel(hover: float) -> void:
+	# wing membranes — translucent fans of light
+	for side in [-1.0, 1.0]:
+		var root := Vector2(0, -30 + hover)
+		var fan := PackedVector2Array([root])
+		for i in 5:
+			var ma: float = -PI * 0.5 + side * (0.36 + 0.18 * i) + sin(anim * 1.2) * 0.04
+			fan.append(root + Vector2.from_angle(ma) * (42.0 - i * 4.0))
+		var mem := accent
+		mem.a = 0.16
+		draw_colored_polygon(fan, mem)
 	# wings — soft fans of light
 	for side in [-1.0, 1.0]:
 		for i in 4:

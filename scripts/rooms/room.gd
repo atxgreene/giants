@@ -50,6 +50,7 @@ func build(t_id: String) -> void:
 	add_child(floor_node)
 	_build_walls()
 	_build_props()
+	_build_atmosphere()
 	match kind:
 		"combat":
 			pass # waves start via start_room()
@@ -212,9 +213,38 @@ func _build_props() -> void:
 				add_child(prop)
 				break
 
+func _build_atmosphere() -> void:
+	# Drifting ash storm (desert) or golden dust motes (hub).
+	var p := CPUParticles2D.new()
+	p.position = bounds.get_center()
+	p.amount = clampi(int(bounds.get_area() / 26000.0), 18, 64)
+	p.lifetime = 7.0
+	p.preprocess = 7.0
+	p.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+	p.emission_rect_extents = bounds.size * 0.55
+	p.gravity = Vector2.ZERO
+	p.spread = 25.0
+	p.scale_amount_min = 1.4
+	p.scale_amount_max = 3.0
+	if kind == "hub":
+		p.direction = Vector2(0.15, -1.0)
+		p.initial_velocity_min = 6.0
+		p.initial_velocity_max = 16.0
+		p.color = Color(0.9, 0.8, 0.5, 0.13)
+	else:
+		p.direction = Vector2(-1.0, 0.22)
+		p.initial_velocity_min = 18.0
+		p.initial_velocity_max = 44.0
+		p.color = Color(0.85, 0.5, 0.35, 0.14)
+	p.z_index = 28
+	add_child(p)
+
 # ============================================================ inner classes
 
 class FloorLayer extends Node2D:
+	## 2.5D environment renderer: layered horizon apron, lit diamond tiles,
+	## scattered decals, glowing molten fissures, walls with real height and
+	## brickwork, edge ambient occlusion, and per-room-type floor inlays.
 	var bounds := Rect2()
 	var room_kind := "combat"
 
@@ -222,25 +252,88 @@ class FloorLayer extends Node2D:
 		queue_redraw()
 
 	func _hash01(x: int, y: int) -> float:
-		var h := fmod(sin(float(x) * 12.9898 + float(y) * 78.233) * 43758.5453, 1.0)
-		return absf(h)
+		return absf(fmod(sin(float(x) * 12.9898 + float(y) * 78.233) * 43758.5453, 1.0))
+
+	func _base_color() -> Color:
+		match room_kind:
+			"boss":
+				return Color(0.33, 0.15, 0.13)
+			"vision", "shrine":
+				return Color(0.37, 0.21, 0.2)
+			"hub":
+				return Color(0.16, 0.17, 0.23)
+			_:
+				return Color(0.46, 0.23, 0.16)
 
 	func _draw() -> void:
-		# Apron of darker sand beyond the walls
-		var apron := bounds.grow(170.0)
-		draw_rect(apron, Color(0.04, 0.04, 0.08) if room_kind == "hub" else Color(0.13, 0.07, 0.07))
-		# Iso diamond tiles
+		var rng := RandomNumberGenerator.new()
+		rng.seed = int(bounds.size.x * 7.0 + bounds.size.y) + room_kind.hash() % 1000
+		_draw_apron(rng)
+		_draw_tiles()
+		_draw_decals(rng)
+		if room_kind != "hub":
+			_draw_cracks(rng)
+		_draw_inlay()
+		_draw_walls()
+		_draw_ao()
+
+	func _draw_apron(rng: RandomNumberGenerator) -> void:
+		var apron := bounds.grow(230.0)
+		if room_kind == "hub":
+			# The void between worlds: deep blue, stars, drifting rock shards.
+			draw_rect(apron, Color(0.03, 0.03, 0.07))
+			for i in 90:
+				var p := Vector2(
+					apron.position.x + _hash01(i, 7) * apron.size.x,
+					apron.position.y + _hash01(i, 13) * apron.size.y)
+				if not bounds.grow(30.0).has_point(p):
+					draw_circle(p, 1.0 + _hash01(i, 3) * 1.2, Color(0.75, 0.8, 1.0, 0.25 + 0.3 * _hash01(i, 5)))
+			for i in 7:
+				var sp := Vector2(
+					apron.position.x + _hash01(i, 21) * apron.size.x,
+					apron.position.y + _hash01(i, 33) * apron.size.y)
+				if bounds.grow(70.0).has_point(sp):
+					continue
+				var s := 10.0 + _hash01(i, 9) * 18.0
+				draw_colored_polygon(PackedVector2Array([
+					sp + Vector2(0, -s), sp + Vector2(s * 0.8, -s * 0.2),
+					sp + Vector2(s * 0.4, s * 0.7), sp + Vector2(-s * 0.6, s * 0.5),
+					sp + Vector2(-s * 0.7, -s * 0.3)]), Color(0.09, 0.09, 0.14))
+			return
+		# Desert horizon: dark sand, distant basalt range to the north,
+		# moonlit dune bands elsewhere.
+		draw_rect(apron, Color(0.11, 0.055, 0.06))
+		# basalt mountains (top apron)
+		var mx := apron.position.x
+		while mx < apron.end.x:
+			var mw := rng.randf_range(90.0, 190.0)
+			var mh := rng.randf_range(50.0, 120.0)
+			var base_y := bounds.position.y - 64.0
+			draw_colored_polygon(PackedVector2Array([
+				Vector2(mx, base_y), Vector2(mx + mw * 0.5, base_y - mh), Vector2(mx + mw, base_y)]),
+				Color(0.06, 0.05, 0.08))
+			# moon rim on the lit (left) slope
+			draw_line(Vector2(mx, base_y), Vector2(mx + mw * 0.5, base_y - mh), Color(0.45, 0.3, 0.3, 0.35), 1.5)
+			mx += mw * rng.randf_range(0.6, 0.85)
+		# dune bands (bottom + sides)
+		for band in 3:
+			var y := bounds.end.y + 60.0 + band * 55.0
+			var pts := PackedVector2Array()
+			pts.append(Vector2(apron.position.x, apron.end.y))
+			var x := apron.position.x
+			while x <= apron.end.x:
+				pts.append(Vector2(x, y + sin(x * 0.013 + band * 2.0) * 16.0))
+				x += 60.0
+			pts.append(Vector2(apron.end.x, apron.end.y))
+			draw_colored_polygon(pts, Color(0.16 - band * 0.03, 0.08 - band * 0.015, 0.075 - band * 0.012))
+
+	func _draw_tiles() -> void:
 		var tw := 64.0
 		var th := 32.0
 		var cols := int(bounds.size.x / tw) + 2
 		var rows := int(bounds.size.y / (th * 0.5)) + 2
-		var base := Color(0.45, 0.22, 0.16)
-		if room_kind == "boss":
-			base = Color(0.32, 0.15, 0.13)
-		elif room_kind == "vision" or room_kind == "shrine":
-			base = Color(0.36, 0.21, 0.2)
-		elif room_kind == "hub":
-			base = Color(0.15, 0.16, 0.22)
+		var base := _base_color()
+		var center := bounds.get_center()
 		for gy in rows:
 			for gx in cols:
 				var off_x := tw * 0.5 if gy % 2 == 1 else 0.0
@@ -249,34 +342,137 @@ class FloorLayer extends Node2D:
 				if cx > bounds.end.x + tw or cy > bounds.end.y + th:
 					continue
 				var v := _hash01(gx, gy)
-				var c := base.lightened(v * 0.13)
+				var c := base.lightened(v * 0.12)
 				if v > 0.93:
-					c = base.darkened(0.2)
+					c = base.darkened(0.18)
+				# lighting: bright near the arena heart, falling off to the walls
+				var dx := absf(cx - center.x) / (bounds.size.x * 0.5)
+				var dy := absf(cy - center.y) / (bounds.size.y * 0.5)
+				var edge := clampf(maxf(dx, dy), 0.0, 1.0)
+				c = c.darkened(edge * edge * 0.34)
+				c = c.lightened((1.0 - edge) * 0.05)
 				draw_colored_polygon(PackedVector2Array([
 					Vector2(cx, cy - th * 0.5), Vector2(cx + tw * 0.5, cy),
 					Vector2(cx, cy + th * 0.5), Vector2(cx - tw * 0.5, cy)]), c)
-		# Molten crack veins
-		var rng := RandomNumberGenerator.new()
-		rng.seed = int(bounds.size.x * 7.0 + bounds.size.y)
+
+	func _draw_decals(rng: RandomNumberGenerator) -> void:
+		# Pebbles, bone chips, and faint sand drifts.
+		for i in 16:
+			var p := Vector2(
+				rng.randf_range(bounds.position.x + 60.0, bounds.end.x - 60.0),
+				rng.randf_range(bounds.position.y + 50.0, bounds.end.y - 50.0))
+			var k := rng.randf()
+			if k < 0.5:
+				var s := rng.randf_range(2.0, 4.5)
+				draw_colored_polygon(PackedVector2Array([
+					p + Vector2(0, -s), p + Vector2(s, s * 0.6), p + Vector2(-s, s * 0.6)]),
+					_base_color().darkened(0.38))
+			elif k < 0.8 and room_kind != "hub":
+				draw_arc(p, rng.randf_range(5.0, 10.0), PI * 1.1, PI * 1.8, 6, Color(0.8, 0.76, 0.66, 0.5), 2.0)
+			else:
+				draw_set_transform(p, rng.randf_range(-0.4, 0.4), Vector2(1.0, 0.35))
+				draw_circle(Vector2.ZERO, rng.randf_range(14.0, 30.0), Color(1, 1, 1, 0.03))
+				draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+
+	func _draw_cracks(rng: RandomNumberGenerator) -> void:
 		for i in 4:
 			var p := Vector2(
 				rng.randf_range(bounds.position.x + 100.0, bounds.end.x - 100.0),
 				rng.randf_range(bounds.position.y + 80.0, bounds.end.y - 80.0))
-			var glow := Color(1.0, 0.4, 0.1, 0.5)
+			Painter.glow(self, p, 56.0, Color(1.0, 0.42, 0.1, 0.2), 3)
 			for seg in 5:
 				var q: Vector2 = p + Vector2(rng.randf_range(-70, 70), rng.randf_range(-40, 40))
-				draw_line(p, q, glow, 3.0)
-				draw_line(p, q, Color(1.0, 0.7, 0.3, 0.25), 6.0)
+				draw_line(p, q, Color(0.06, 0.03, 0.03, 0.8), 7.0)
+				draw_line(p, q, Color(1.0, 0.42, 0.1, 0.7), 3.2)
+				draw_line(p, q, Color(1.0, 0.78, 0.35, 0.8), 1.3)
 				p = q
-		# Boundary wall blocks (basalt)
-		var basalt := Color(0.1, 0.09, 0.11)
-		var wall_h := 26.0
-		draw_rect(Rect2(bounds.position.x - 24, bounds.position.y - wall_h - 12, bounds.size.x + 48, wall_h), basalt)
-		draw_rect(Rect2(bounds.position.x - 24, bounds.end.y, bounds.size.x + 48, wall_h), basalt)
-		draw_rect(Rect2(bounds.position.x - 24, bounds.position.y - wall_h - 12, 24, bounds.size.y + wall_h * 2 + 12), basalt)
-		draw_rect(Rect2(bounds.end.x, bounds.position.y - wall_h - 12, 24, bounds.size.y + wall_h * 2 + 12), basalt)
-		var rim := Color(0.85, 0.5, 0.2, 0.18)
-		draw_rect(Rect2(bounds.position.x - 24, bounds.position.y - 14, bounds.size.x + 48, 3), rim)
+
+	func _draw_inlay() -> void:
+		var center := bounds.get_center()
+		match room_kind:
+			"hub":
+				# The great seal of the Watchtower, inlaid in the floor.
+				var gold := Color(0.85, 0.72, 0.38, 0.28)
+				Painter.rune_ring(self, center, 200.0, gold, 16, 0.0, 2.0)
+				draw_arc(center, 168.0, 0, TAU, 48, gold, 1.2)
+				var tri := PackedVector2Array()
+				for i in 3:
+					tri.append(center + Vector2.from_angle(TAU * i / 3.0 - PI * 0.5) * 140.0)
+				draw_polyline(PackedVector2Array([tri[0], tri[1], tri[2], tri[0]]), gold, 1.5)
+				for i in 24:
+					draw_circle(center + Vector2.from_angle(TAU * i / 24.0) * 184.0, 2.0, gold)
+				Painter.glow(self, center, 120.0, Color(0.85, 0.72, 0.38, 0.1), 3)
+			"boss":
+				var iron := Color(0.9, 0.4, 0.15, 0.16)
+				Painter.rune_ring(self, center, 250.0, iron, 12, 0.4, 2.0)
+				draw_arc(center, 218.0, 0, TAU, 48, iron, 1.0)
+			"vision", "shrine":
+				var lapis := Color(0.45, 0.65, 1.0, 0.16)
+				Painter.rune_ring(self, center, 150.0, lapis, 10, 0.0, 1.5)
+
+	func _draw_walls() -> void:
+		var lit := Color(0.2, 0.17, 0.22)      # sun-facing cap
+		var face := Color(0.115, 0.1, 0.13)    # vertical south face
+		var dark := Color(0.075, 0.065, 0.09)
+		var seam := Color(0.05, 0.045, 0.06)
+		var rim := Color(0.95, 0.55, 0.25, 0.2)
+		var x0 := bounds.position.x
+		var y0 := bounds.position.y
+		var x1 := bounds.end.x
+		var y1 := bounds.end.y
+		# NORTH wall: tall face with brickwork + lit cap.
+		var wh := 58.0
+		draw_rect(Rect2(x0 - 26, y0 - wh - 14, bounds.size.x + 52, wh), face)
+		draw_rect(Rect2(x0 - 26, y0 - wh - 14, bounds.size.x + 52, wh * 0.45), face.lightened(0.07))
+		draw_rect(Rect2(x0 - 26, y0 - 18, bounds.size.x + 52, 4), dark)
+		# brick seams
+		var bx := x0 - 26.0
+		var row2_off := 34.0
+		while bx < x1 + 26.0:
+			draw_line(Vector2(bx, y0 - wh - 14), Vector2(bx, y0 - wh * 0.5 - 14), seam, 1.5)
+			draw_line(Vector2(bx + row2_off, y0 - wh * 0.5 - 14), Vector2(bx + row2_off, y0 - 16), seam, 1.5)
+			bx += 68.0
+		draw_line(Vector2(x0 - 26, y0 - wh * 0.5 - 14), Vector2(x1 + 26, y0 - wh * 0.5 - 14), seam, 1.5)
+		# cap + merlons + ember rim light
+		draw_rect(Rect2(x0 - 26, y0 - wh - 24, bounds.size.x + 52, 12), lit)
+		var mx := x0
+		while mx < x1 - 30.0:
+			draw_rect(Rect2(mx, y0 - wh - 34, 22, 12), lit)
+			draw_rect(Rect2(mx, y0 - wh - 34, 22, 3), lit.lightened(0.15))
+			mx += 96.0
+		draw_rect(Rect2(x0 - 26, y0 - 15, bounds.size.x + 52, 2.5), rim)
+		# EAST / WEST walls: slim faces with seams.
+		for side in 2:
+			var wx := x0 - 26.0 if side == 0 else x1
+			draw_rect(Rect2(wx, y0 - 14, 26, bounds.size.y + 14), face if side == 1 else dark)
+			draw_rect(Rect2(wx + (20 if side == 0 else 0), y0 - 14, 6, bounds.size.y + 14), dark if side == 0 else face.lightened(0.06))
+			var sy := y0
+			while sy < y1:
+				draw_line(Vector2(wx, sy), Vector2(wx + 26, sy), seam, 1.2)
+				sy += 52.0
+		# SOUTH wall: low parapet so combat stays readable.
+		draw_rect(Rect2(x0 - 26, y1, bounds.size.x + 52, 20), face.lightened(0.05))
+		draw_rect(Rect2(x0 - 26, y1, bounds.size.x + 52, 5), lit)
+		draw_rect(Rect2(x0 - 26, y1 + 20, bounds.size.x + 52, 6), dark)
+		# corner pillars with ember braziers (north corners)
+		for cx in [x0 - 30.0, x1 - 4.0]:
+			draw_rect(Rect2(cx, y0 - wh - 40, 34, wh + 40), dark.lightened(0.04))
+			draw_rect(Rect2(cx - 3, y0 - wh - 46, 40, 10), lit)
+			if room_kind != "hub":
+				Painter.glow(self, Vector2(cx + 17, y0 - wh - 50), 16.0, Color(1.0, 0.5, 0.15, 0.5), 3)
+				draw_circle(Vector2(cx + 17, y0 - wh - 50), 4.0, Color(1.0, 0.75, 0.3))
+
+	func _draw_ao() -> void:
+		# Soft ambient occlusion where floor meets walls.
+		var steps := [[0.0, 0.16], [10.0, 0.09], [20.0, 0.045]]
+		for s in steps:
+			var inset: float = s[0]
+			var a: float = s[1]
+			var c := Color(0, 0, 0, a)
+			draw_rect(Rect2(bounds.position.x, bounds.position.y + inset, bounds.size.x, 10), c)
+			draw_rect(Rect2(bounds.position.x, bounds.end.y - inset - 10, bounds.size.x, 10), c)
+			draw_rect(Rect2(bounds.position.x + inset, bounds.position.y, 10, bounds.size.y), c)
+			draw_rect(Rect2(bounds.end.x - inset - 10, bounds.position.y, 10, bounds.size.y), c)
 
 class Gate extends Node2D:
 	var reward := "advance"
@@ -382,7 +578,12 @@ class PropNode extends Node2D:
 			add_child(body)
 		queue_redraw()
 
+	const SHADOW_R := {"bones": 22.0, "idol": 15.0, "forge": 27.0, "rack": 21.0,
+		"altar_broken": 26.0, "starfall": 13.0}
+
 	func _draw() -> void:
+		if kind != "crack" and SHADOW_R.has(kind):
+			Painter.shadow(self, SHADOW_R[kind], 2.0, 0.3)
 		match kind:
 			"bones":
 				var bone := Color(0.85, 0.8, 0.72)
@@ -403,7 +604,8 @@ class PropNode extends Node2D:
 				var iron := Color(0.13, 0.12, 0.14)
 				draw_rect(Rect2(-26, -34, 52, 40), iron)
 				draw_rect(Rect2(-20, -46, 40, 12), iron.lightened(0.08))
-				var ember := Color(1.0, 0.45, 0.12, 0.8)
+				Painter.glow(self, Vector2(0, -15), 30.0, Color(1.0, 0.45, 0.12, 0.4), 3)
+				var ember := Color(1.0, 0.45, 0.12, 0.85)
 				draw_rect(Rect2(-12, -22, 24, 14), ember)
 				draw_rect(Rect2(-8, -19, 16, 8), Color(1.0, 0.75, 0.3, 0.9))
 			"rack":
@@ -422,8 +624,7 @@ class PropNode extends Node2D:
 					Vector2(8, -26), Vector2(26, -22), Vector2(22, -10), Vector2(6, -12)]), stone.darkened(0.12))
 				draw_line(Vector2(-6, -26), Vector2(2, -10), Color(0.1, 0.1, 0.1), 2.0)
 			"starfall":
-				var glow := Color(0.45, 0.75, 1.0, 0.4)
-				draw_circle(Vector2(0, -10), 18.0, glow)
+				Painter.glow(self, Vector2(0, -10), 26.0, Color(0.45, 0.75, 1.0, 0.45), 3)
 				draw_colored_polygon(PackedVector2Array([
 					Vector2(0, -34), Vector2(9, -8), Vector2(0, 0), Vector2(-9, -8)]), Color(0.55, 0.8, 1.0))
 				draw_colored_polygon(PackedVector2Array([
