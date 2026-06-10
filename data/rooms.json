@@ -1,0 +1,71 @@
+{
+  "templates": {
+    "hub": {
+      "name": "The Watchtower Between Worlds", "kind": "hub", "size": [1300, 820],
+      "props": [], "waves": []
+    },
+    "start": {
+      "name": "Threshold of the Desert", "kind": "start", "size": [1100, 700],
+      "props": ["altar_broken", "bones", "idol", "crack"], "waves": []
+    },
+    "arena_small": {
+      "name": "Scorched Hollow", "kind": "combat", "size": [1000, 680],
+      "props": ["bones", "crack", "rack", "idol"],
+      "waves": [
+        [{"type": "ash_thrall", "count": 4}],
+        [{"type": "ash_thrall", "count": 3}, {"type": "star_archer", "count": 2}]
+      ]
+    },
+    "arena_wide": {
+      "name": "Plain of Broken Altars", "kind": "combat", "size": [1500, 860],
+      "props": ["altar_broken", "altar_broken", "idol", "bones", "crack", "starfall"],
+      "waves": [
+        [{"type": "ash_thrall", "count": 3}, {"type": "watcher_hound", "count": 3}],
+        [{"type": "iron_brute", "count": 2}, {"type": "star_archer", "count": 2}],
+        [{"type": "nephilim_bloodling", "count": 2}, {"type": "watcher_hound", "count": 2}]
+      ]
+    },
+    "forge_ambush": {
+      "name": "Black Iron Forge", "kind": "combat", "size": [1200, 760],
+      "props": ["forge", "forge", "rack", "rack", "crack", "idol"],
+      "waves": [
+        [{"type": "iron_brute", "count": 1}, {"type": "ash_thrall", "count": 3}],
+        [{"type": "watcher_hound", "count": 4}],
+        [{"type": "star_archer", "count": 3}, {"type": "ash_thrall", "count": 2}]
+      ]
+    },
+    "bone_corridor": {
+      "name": "Corridor of Sleeping Bones", "kind": "combat", "size": [1750, 540],
+      "props": ["bones", "bones", "bones", "crack", "starfall"],
+      "waves": [
+        [{"type": "nephilim_bloodling", "count": 2}, {"type": "ash_thrall", "count": 2}],
+        [{"type": "bound_giant_spirit", "count": 1}, {"type": "star_archer", "count": 2}],
+        [{"type": "bound_giant_spirit", "count": 1}, {"type": "watcher_hound", "count": 3}]
+      ]
+    },
+    "elite_forge": {
+      "name": "Anvil of Azazel", "kind": "combat", "size": [1300, 800],
+      "props": ["forge", "forge", "rack", "idol", "crack"],
+      "waves": [
+        [{"type": "smith_priest", "count": 1}, {"type": "ash_thrall", "count": 2}],
+        [{"type": "nephilim_bloodling", "count": 2}]
+      ]
+    },
+    "relic_shrine": {
+      "name": "Shrine of the Scapegoat Cliffs", "kind": "shrine", "size": [900, 620],
+      "props": ["altar_broken", "idol", "starfall", "bones"], "waves": []
+    },
+    "vision_room": {
+      "name": "Chamber of the Sleeping Dream", "kind": "vision", "size": [900, 620],
+      "props": ["starfall", "starfall", "bones", "crack"], "waves": []
+    },
+    "miniboss_arena": {
+      "name": "Grave of the Half-Buried", "kind": "miniboss", "size": [1500, 900],
+      "props": ["bones", "bones", "crack", "crack"], "waves": []
+    },
+    "boss_arena": {
+      "name": "The First Forge", "kind": "boss", "size": [1600, 950],
+      "props": ["forge", "rack", "rack", "crack"], "waves": []
+    }
+  }
+}

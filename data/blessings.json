@@ -1,0 +1,60 @@
+{
+  "pools": {
+    "michael": {
+      "name": "Michael",
+      "title": "Prince of the Host",
+      "color": "#e8c87a",
+      "blessings": [
+        {"id": "m_stagger", "name": "Weight of Verdict", "desc": "Your sword strikes carry +60% stagger.", "mods": {"stagger_mult": 0.6}},
+        {"id": "m_dash_spark", "name": "Shield Spark", "desc": "Dashing strikes nearby enemies for judgment damage.", "mods": {"dash_spark": 1}},
+        {"id": "m_judgment", "name": "Last Stand of the Witness", "desc": "While below 35% health, deal +30% damage.", "mods": {"judgment": 0.3}},
+        {"id": "m_ult", "name": "Michael's Edge", "desc": "Michael's Verdict (Ultimate) deals +45% damage.", "mods": {"ult_dmg": 0.45}}
+      ]
+    },
+    "gabriel": {
+      "name": "Gabriel",
+      "title": "Voice of Revelation",
+      "color": "#5ab0ff",
+      "blessings": [
+        {"id": "g_mark", "name": "Word Against Them", "desc": "Your crescent special marks enemies. Marked enemies take +20% damage.", "mods": {"mark_on_special": 1}},
+        {"id": "g_mark_dmg", "name": "Indictment", "desc": "Marked enemies take an additional +25% damage.", "mods": {"mark_dmg": 0.25}},
+        {"id": "g_rewards", "name": "Opened Doors", "desc": "Room exits reveal an additional path.", "mods": {"extra_choice": 1}},
+        {"id": "g_rev", "name": "Trumpet's Resonance", "desc": "Revelation builds 50% faster.", "mods": {"rev_gain": 0.5}}
+      ]
+    },
+    "raphael": {
+      "name": "Raphael",
+      "title": "Healer of the Wound of the World",
+      "color": "#7fd49a",
+      "blessings": [
+        {"id": "r_roomheal", "name": "Balm of the Road", "desc": "Heal 8 health after clearing each room.", "mods": {"room_heal": 8}},
+        {"id": "r_corrupt", "name": "Clean Hands", "desc": "Corruption you would gain is halved.", "mods": {"corrupt_reduce": 0.5}},
+        {"id": "r_cleanse", "name": "Unpoisoned Blood", "desc": "Burn, poison, and corruption pools cannot harm you over time.", "mods": {"dot_immune": 1}},
+        {"id": "r_sealheal", "name": "Mercy in the Circle", "desc": "Your Binding Seal restores 5 health for every enemy it captures.", "mods": {"seal_heal": 5}}
+      ]
+    },
+    "uriel": {
+      "name": "Uriel",
+      "title": "Flame over the Abyss",
+      "color": "#ff8c3a",
+      "blessings": [
+        {"id": "u_burn", "name": "Starfire Brand", "desc": "Your attacks set enemies burning with starfire.", "mods": {"burn_on_hit": 1}},
+        {"id": "u_trail", "name": "Walk of Embers", "desc": "Your dash leaves a trail of flame that burns enemies.", "mods": {"flame_trail": 1}},
+        {"id": "u_split", "name": "Scattered Tongues", "desc": "Your crescent special splits into three flame bolts on impact.", "mods": {"special_split": 1}},
+        {"id": "u_slowmo", "name": "Sight Within Fire", "desc": "Narrowly dodging an attack briefly slows the world around you.", "mods": {"near_dodge_slow": 1}}
+      ]
+    }
+  },
+  "forbidden": [
+    {"id": "f_blood_edge", "name": "Blood-Quenched Edge", "desc": "+30% damage. The blade drinks. (+20 Corruption)", "mods": {"dmg_mult": 0.3}, "corruption": 20},
+    {"id": "f_leech", "name": "Tooth of the Devourer", "desc": "Heal for 6% of damage you deal. Hunger answers hunger. (+20 Corruption)", "mods": {"lifesteal": 0.06}, "corruption": 20},
+    {"id": "f_third_eye", "name": "The Third Eye Opens", "desc": "Your crescent special fires a second crescent. You see too much. (+25 Corruption)", "mods": {"extra_projectile": 1}, "corruption": 25}
+  ],
+  "relics": [
+    {"id": "rel_censer", "name": "Censer of Embers", "desc": "A swinging coal from the Watchtower brazier. Attacks have a chance to burn — your strikes now always burn.", "mods": {"burn_on_hit": 1}},
+    {"id": "rel_phylactery", "name": "Witness's Phylactery", "desc": "Verses bound to the forehead. +25 Maximum Health.", "mods": {"max_hp": 25}},
+    {"id": "rel_greaves", "name": "Bronze Greaves of the Runner", "desc": "Cast before the flood, untouched by it. Dash recovers 25% faster.", "mods": {"dash_cd": -0.25}},
+    {"id": "rel_lapis", "name": "Lapis Tear", "desc": "A drop of the upper waters. Revelation builds 35% faster and +10 Maximum Health.", "mods": {"rev_gain": 0.35, "max_hp": 10}},
+    {"id": "rel_whetstone", "name": "Whetstone of the First Altar", "desc": "It has only ever sharpened consecrated edges. +15% damage.", "mods": {"dmg_mult": 0.15}}
+  ]
+}

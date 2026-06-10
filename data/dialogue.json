@@ -1,0 +1,83 @@
+{
+  "intro": [
+    {"who": "", "text": "The giants dreamed before the flood. Their dreams were judgments."},
+    {"who": "", "text": "You wake on cold stone, in a tower that stands between the world and what watches it."}
+  ],
+  "intro_gabriel": [
+    {"who": "Gabriel", "text": "You were not chosen because you are pure. You were chosen because you are free."},
+    {"who": "Gabriel", "text": "Stand. The Prince of the Host is waiting, and he hates to wait."}
+  ],
+  "intro_michael": [
+    {"who": "Michael", "text": "Witness. Take the blade. It was carried at the gate of Eden, and it has not cooled."},
+    {"who": "Michael", "text": "Their weapons taught mankind to worship its own violence. Break the lesson. Bind the teacher."},
+    {"who": "Michael", "text": "The Desert of Azazel lies through the gate. His First Blade holds the forge there. Begin."}
+  ],
+  "michael_default": [
+    {"who": "Michael", "text": "Their weapons taught mankind to worship its own violence. Break the lesson. Bind the teacher."},
+    {"who": "Michael", "text": "Courage is not the absence of fear. It is fear, given orders."},
+    {"who": "Michael", "text": "You will fall in the desert. You will return here. Both of these are part of the war. Neither is defeat."},
+    {"who": "Michael", "text": "The Brutes wear iron taught by Azazel himself. Stagger them before they swing, or be elsewhere when they do."}
+  ],
+  "michael_disapprove": [
+    {"who": "Michael", "text": "You took the forge's gift. I watched you take it."},
+    {"who": "Michael", "text": "I will not pretend the edge is not sharper. I will say this once: every gift of Azazel's is a hook, and the line is long."},
+    {"who": "Michael", "text": "Carry it, then. And when the line pulls, Witness — cut it. You carry the only blade that can."}
+  ],
+  "michael_postboss": [
+    {"who": "Michael", "text": "The First Blade is broken. Say it plainly, Witness: you did this. Then stop saying it, because the forgemaster remains."},
+    {"who": "Michael", "text": "Azazel forged many lieutenants. The desert was one classroom. There are others — older, deeper, and one of them is not on Earth."}
+  ],
+  "gabriel_default": [
+    {"who": "Gabriel", "text": "Not every secret is revelation. Some knowledge opens like a wound."},
+    {"who": "Gabriel", "text": "The Archive grows as you witness. Read it. Testimony unread is only ink."},
+    {"who": "Gabriel", "text": "The giants' spirits scream in the desert. You may silence them, or bind them. The second is harder, and it is the one that fills you with sight."},
+    {"who": "Gabriel", "text": "When the doors of a room offer themselves to you, remember: I have, on occasion, opened extra ones for those I favor."}
+  ],
+  "gabriel_postboss": [
+    {"who": "Gabriel", "text": "You refused nothing less than a sermon from the inventor of the sword. Or you accepted it. Either way — you heard it. Hearing is where every fall and every return begins."},
+    {"who": "Gabriel", "text": "Uriel walks the tower now. He does not walk anywhere without reason. Speak to him, and do not be surprised if the answers are warm."}
+  ],
+  "raphael_default": [
+    {"who": "Raphael", "text": "The giants were born from rebellion, but even monsters can suffer the sins of their fathers."},
+    {"who": "Raphael", "text": "I bound Azazel once, in the desert that now wears his name. Healing the earth afterward took longer than the binding. It always does."},
+    {"who": "Raphael", "text": "Drink at the fountains when the desert offers them. Mercy refused out of pride is just a slower wound."}
+  ],
+  "raphael_corrupt": [
+    {"who": "Raphael", "text": "Come here. Let me look at you."},
+    {"who": "Raphael", "text": "The corruption is in you like rust in water. It is not yet a flood. Hear me: it is not yet a flood."},
+    {"who": "Raphael", "text": "Refuse the next gift. Just the next one. That is how every cleansing I have ever performed actually began."}
+  ],
+  "uriel_default": [
+    {"who": "Uriel", "text": "Fire reveals the shape of a thing. It also decides what remains."},
+    {"who": "Uriel", "text": "You broke a blade that was forged before your alphabet. I am moderately impressed, which for me is a great deal."},
+    {"who": "Uriel", "text": "My blessings are now yours to find in the desert. Handle them as you would handle me: attentively."},
+    {"who": "Uriel", "text": "One blade has been broken. The forgemaster remains. Under the sand, under the rock, under the names — he remains, and he is patient, and so am I."}
+  ],
+  "scribe_default": [
+    {"who": "The Scribe of Dust", "text": "Welcome back. The Archive missed you. The Archive is, of course, a room, and cannot miss anyone. Welcome back."},
+    {"who": "The Scribe of Dust", "text": "Every entry is shelved by source: Scripture, the Enochic books, the Giants fragments, the scholars' guesses, our own mythic extrapolation — and the shelf I am not allowed to discuss."},
+    {"who": "The Scribe of Dust", "text": "Disclosure is a staircase, Witness, not a door. You are several steps up already. Try not to look down."}
+  ],
+  "scribe_corrupt": [
+    {"who": "The Scribe of Dust", "text": "Your file has begun annotating itself. That is not a figure of speech. I now keep it in a closed drawer."},
+    {"who": "The Scribe of Dust", "text": "Read the entry on Forbidden Knowledge again. Slowly, this time."}
+  ],
+  "vision": [
+    {"who": "The Sleeping Dream", "text": "...a garden. Two hundred trees, watered and tall. Then water of another kind, and the trees torn out by the roots..."},
+    {"who": "The Sleeping Dream", "text": "...a tablet pressed under the flood, the ink lifting off like smoke. Three names left legible. Three..."},
+    {"who": "The Sleeping Dream", "text": "...the dreamer turns in the sand beneath you. The dreamer has been interpreting, all these centuries, and the interpretation is always judgment..."}
+  ],
+  "boss_intro": [
+    {"who": "Azazel's First Blade", "text": "You call this judgment? I gave mankind the blade. You gave them silence."}
+  ],
+  "boss_tempt": [
+    {"who": "Azazel's First Blade", "text": "I was the first thing he ever forged, Witness. Before swords had names, I was the lesson. Let me teach you one stroke of it — one — and you will never lose again."}
+  ],
+  "boss_defeat": [
+    {"who": "Azazel's First Blade", "text": "The forge... does not go out. It only... changes hands..."}
+  ],
+  "victory_uriel": [
+    {"who": "Uriel", "text": "So. The First Blade is unmade, and the Witness still stands. Fire reveals the shape of a thing."},
+    {"who": "Uriel", "text": "One blade has been broken. The forgemaster remains."}
+  ]
+}

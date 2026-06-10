@@ -1,0 +1,36 @@
+{
+  "flaming_sword": {
+    "name": "Flaming Sword of Commission",
+    "desc": "The blade Michael set in your hands at the Watchtower. It remembers the gate of Eden.",
+    "light": [
+      {"dmg": 11, "range": 88, "arc": 105, "windup": 0.10, "recover": 0.16, "kb": 130, "stagger": 1.0},
+      {"dmg": 13, "range": 92, "arc": 115, "windup": 0.10, "recover": 0.16, "kb": 150, "stagger": 1.1},
+      {"dmg": 20, "range": 104, "arc": 125, "windup": 0.15, "recover": 0.28, "kb": 280, "stagger": 2.2}
+    ],
+    "heavy": {"dmg": 32, "range": 124, "arc": 170, "windup": 0.34, "recover": 0.42, "kb": 330, "stagger": 3.2},
+    "dash_slash": {"dmg": 17, "range": 98, "arc": 95, "windup": 0.05, "recover": 0.14, "kb": 210, "stagger": 1.6},
+    "special": {"dmg": 23, "speed": 540, "radius": 32, "cd": 2.2, "life": 1.1},
+    "seal": {"dmg": 3, "radius": 88, "duration": 2.7, "cd": 7.0, "arm": 0.35, "cast_range": 250},
+    "ult": {"dmg": 75, "radius": 270, "beam_dmg": 55, "beam_len": 520, "beam_w": 110}
+  },
+  "aspects": {
+    "commission": {
+      "name": "Aspect of Commission",
+      "desc": "The sword as it was given: balanced, patient, certain.",
+      "cost": 0,
+      "mods": {}
+    },
+    "michael": {
+      "name": "Aspect of Michael",
+      "desc": "Strikes land like verdicts. Bonus stagger, bonus damage against the iron-armored, and your Ultimate charges faster.",
+      "cost": 80,
+      "mods": {"stagger_mult": 0.5, "armored_bonus": 0.3, "ult_charge_mult": 0.3}
+    },
+    "uriel": {
+      "name": "Aspect of Uriel",
+      "desc": "The blade remembers the first fire. Attacks burn, dashes leave a flame trail, and your crescent pierces everything it judges.",
+      "cost": 120,
+      "mods": {"burn_on_hit": 1, "flame_trail": 1, "special_pierce": 1}
+    }
+  }
+}

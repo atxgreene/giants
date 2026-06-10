@@ -1,0 +1,114 @@
+{
+  "appointed-witness": {
+    "title": "The Appointed Witness",
+    "tier": 5,
+    "summary": "You. A mortal scribe-warrior summoned to the Watchtower Between Worlds and commissioned by the archangels to hunt, bind, and expose what fell. The office of 'witness' draws on the biblical pattern of humans chosen to see and testify (Isaiah 43:10, Revelation 11), but the Appointed Witness as an institution — a mortal deputized against the Watchers — is this game's own extrapolation.",
+    "unlocked_by": "Beginning the story.",
+    "relevance": "Your character. Your Revelation meter measures how much of the hidden war you have truly seen; your Corruption meter measures how much of it has gotten into you.",
+    "mystery": "Gabriel says you were chosen because you are free. Free of what, exactly, has not been said."
+  },
+  "watchers": {
+    "title": "The Watchers",
+    "tier": 2,
+    "summary": "In the Book of the Watchers (1 Enoch 1–36), two hundred angels of the class called Watchers descend on Mount Hermon in the days of Jared, swear a mutual oath, take human wives, and teach forbidden arts — metallurgy, sorcery, cosmetics, astrology. Their leaders include Shemihazah and Azazel. Genesis 6:1–4 preserves a far terser canonical kernel: the 'sons of God' came in to the daughters of men. Jude 6 and 2 Peter 2:4 speak of angels who left their proper dwelling, kept in chains under gloomy darkness.",
+    "unlocked_by": "Entering the Desert of Azazel for the first time.",
+    "relevance": "The Watchers themselves are imprisoned. What you fight are their works: their cults, their forges, their half-blood children, and the spirits those children left behind.",
+    "mystery": "Two hundred swore the oath. The Archive lists the deeds of perhaps twenty. The rest taught quieter things."
+  },
+  "nephilim": {
+    "title": "The Nephilim",
+    "tier": 1,
+    "summary": "\"The Nephilim were on the earth in those days, and also afterward...\" (Genesis 6:4). The canonical text calls them the mighty men of old, men of renown, born when the sons of God came in to the daughters of men. The word's derivation — often linked to the Hebrew naphal, 'to fall' — is debated by scholars, as is nearly everything else about them. Numbers 13:33 reports their name spoken again, after the flood, in the mouths of frightened spies.",
+    "unlocked_by": "Slaying a Nephilim Bloodling.",
+    "relevance": "The Bloodlings of the desert are lesser, late-bred echoes of that stock — fast, furious, and starving. They are a Game-Original extrapolation grafted onto the canonical root.",
+    "mystery": "\"And also afterward.\" The Archive underlines these three words in red."
+  },
+  "teaching-of-weapons": {
+    "title": "The Teaching of Weapons",
+    "tier": 2,
+    "summary": "\"And Azazel taught men to make swords and knives and shields and breastplates... and there was much godlessness, and they became corrupt in all their ways\" (1 Enoch 8:1, trans. varies). Of all the forbidden arts, the Archive ranks this first: not because iron is evil, but because Azazel taught mankind to see one another as targets. The earth itself cried out, and the charge laid against Azazel was: 'to him ascribe all sin.'",
+    "unlocked_by": "Defeating Azazel's First Blade.",
+    "relevance": "The First Forge you destroyed was one classroom among many. The lesson is still being taught — later, in quieter centuries, under other names.",
+    "mystery": "The First Blade asked you a true question: what did Heaven give mankind instead of the sword? The Archive does not record your answer. It records that you gave one."
+  },
+  "giants-dream": {
+    "title": "The Giants' Dream",
+    "tier": 3,
+    "summary": "Among the Dead Sea Scrolls survive fragments of a Book of Giants (4Q530 and related), in which the giants — children of the Watchers, with names like Ohyah, Hahyah, and Gilgamesh — are troubled by dreams of judgment: a garden of trees uprooted, a tablet plunged into water with only three names spared. They send one of their own to Enoch to beg an interpretation. The fragments break off before most answers come.",
+    "unlocked_by": "Witnessing the vision in the Chamber of the Sleeping Dream.",
+    "relevance": "The giants dreamed before the flood, and their dreams were judgments. The vision rooms of the desert are places where those dreams still pool, like water in a cellar.",
+    "mystery": "The tablet went into the water and three names were spared. The fragment does not say which three. Something in the desert believes one of the names is yours."
+  },
+  "giant-spirits": {
+    "title": "Disembodied Giant Spirits",
+    "tier": 2,
+    "summary": "1 Enoch 15:8–12 answers a grim question: what happens when a being that is half spirit and half flesh dies? \"And now the giants, who were born of spirit and flesh, shall be called evil spirits upon the earth... they shall rise up against the sons of men, because they have come forth from them.\" The flood drowned the giants' bodies. Their spirits, says the tradition, remained — hungry, homeless, and resentful of everything that still breathes.",
+    "unlocked_by": "Slaying a Bound Giant Spirit.",
+    "relevance": "The wailing colossi of the desert are these remnants, snared in old binding circles. They can be destroyed — or bound again. Binding fills your Revelation; the Archive considers it the more honest act.",
+    "mystery": "They scream in a language. Gabriel has declined, twice, to translate it."
+  },
+  "forbidden-knowledge": {
+    "title": "Forbidden Knowledge",
+    "tier": 5,
+    "summary": "The Watchers' sin was not knowledge itself but its theft — arts handed down without covenant, power without office. The corrupted shrines of the desert still dispense these gifts to anyone who asks. They work. That is the terrible thing about them; the tradition never claims the forbidden arts were fake, only that they were fatal. Each gift accepted writes something into the one who accepts it.",
+    "unlocked_by": "Facing the temptation of forbidden power.",
+    "relevance": "Forbidden rewards raise your Corruption. At high Corruption the desert grows stronger against you, and your patrons grow quieter. At full Corruption — the Archive's hand shakes here — another ending becomes possible.",
+    "mystery": "Raphael was asked whether a fully corrupted Witness has ever been recovered. He answered with a question: 'Recovered by whom?'"
+  },
+  "michael": {
+    "title": "Michael",
+    "tier": 1,
+    "summary": "Named in Daniel 10 and 12 as 'the great prince who has charge of your people,' in Jude 9 disputing with the devil over the body of Moses, and in Revelation 12 leading the war in heaven against the dragon. In the Enochic tradition he is one of the four who hear the earth's cry against the Watchers and is sent to bind Shemihazah. The Archive's portrait: war as a form of protection, never of appetite.",
+    "unlocked_by": "Known from the beginning.",
+    "relevance": "Your commissioning patron. His blessings reward standing your ground: stagger, judgment damage, the Verdict.",
+    "mystery": "Jude records that even Michael, contending with the devil, did not presume to pronounce a reviling judgment. He said only: 'The Lord rebuke you.' Michael has never once told you that you fight well. He checks, every time, that you come back."
+  },
+  "gabriel": {
+    "title": "Gabriel",
+    "tier": 1,
+    "summary": "The interpreter of Daniel's visions (Daniel 8–9) and the announcer of births in Luke 1: 'I am Gabriel, who stand in the presence of God.' In 1 Enoch he is sent against the children of the Watchers, to set them against one another. The Archive's portrait: a being made of message, for whom speaking and acting are the same gesture.",
+    "unlocked_by": "Known from the beginning.",
+    "relevance": "Patron of Revelation. His blessings mark enemies, open doors, and fill your Revelation meter — the slow disclosure of the whole hidden war.",
+    "mystery": "Gabriel announces. He has implied, in his oblique way, that there is one more announcement assigned to him, and that he is in no hurry to deliver it."
+  },
+  "raphael": {
+    "title": "Raphael",
+    "tier": 2,
+    "summary": "In the Book of Tobit (canonical for some traditions, deuterocanonical for others) he is the healer and road-companion who binds a demon in the desert of Egypt. In 1 Enoch 10 he receives the command: 'Bind Azazel hand and foot, and cast him into the darkness... and heal the earth which the angels have corrupted.' Healing, in his file, is not soft. It is the most violent thing done to a wound.",
+    "unlocked_by": "Drinking from a healing fountain in the desert.",
+    "relevance": "Patron of restoration. His blessings heal you between rooms, slow your Corruption, and make your Binding Seal an act of mercy that pays.",
+    "mystery": "It was Raphael who bound Azazel the first time. He does not speak of it. He watches you head toward the desert that bears the prisoner's name, and his sorrow is older than yours."
+  },
+  "uriel": {
+    "title": "Uriel",
+    "tier": 2,
+    "summary": "Absent from the shorter canon, prominent in 2 Esdras and 1 Enoch, where he guides Enoch through the places of punishment and shows him the courses of the luminaries. His name is usually read 'Fire of God' or 'Light of God.' The Archive shelves his file apart from the others, in a case that is warm to the touch.",
+    "unlocked_by": "Destroying Azazel's First Blade.",
+    "relevance": "Patron of fire and cosmic secrets. His blessing pool opens only after the First Forge falls: starfire, ember trails, scattered tongues of flame, and sight within fire.",
+    "mystery": "Uriel knows where the fallen stars landed. All of them. He has shown you one desert."
+  },
+  "desert-of-azazel": {
+    "title": "The Desert of Azazel",
+    "tier": 4,
+    "summary": "Leviticus 16 sends a goat 'to Azazel, into the wilderness' on the Day of Atonement; 1 Enoch 10:4 has Azazel bound in a desert called Dudael, jagged rocks heaped upon him, his face covered from light. Scholars dispute whether the Levitical Azazel names a demon, a cliff, or the goat itself — the Archive marks this entry Scholarly Reconstruction and lets the dispute stand. The desert you walk is the game's rendering of that contested wilderness: red sand over a buried prisoner.",
+    "unlocked_by": "Entering the Desert of Azazel.",
+    "relevance": "The first biome. Its forges, idols, and scapegoat cliffs all face inward, toward something under the dunes that the cult is trying to dig out.",
+    "mystery": "The molten cracks in the rock do not radiate from the volcanic south. Mapped, they radiate from a single point. The cult digs toward it. You have been walking on it the whole time."
+  },
+  "the-scribe-of-dust": {
+    "title": "The Scribe of Dust",
+    "tier": 6,
+    "summary": "The archivist of the Watchtower. Human-shaped, human-mannered, endlessly patient with your questions. The Archive contains a file on every being in the Watchtower, including the archangels. It contains no file on the Scribe. When asked, the Scribe smiled and said the cobbler's children go unshod.",
+    "unlocked_by": "???",
+    "relevance": "Maintains the Witness Archive — this codex. Sorts every entry into its source tier with a confidence that ought, itself, to be a source tier.",
+    "mystery": "Enoch was a scribe, and was taken, and 'was not, for God took him.' The Archive neither confirms nor denies. The Scribe's handwriting in the oldest files has not changed in any sample, ever."
+  },
+  "final-revelation": {
+    "title": "The Final Revelation",
+    "tier": 6,
+    "summary": "The Archive's last shelf is empty, and labeled. Whatever is meant to stand there has not been written, or has been written and removed, or is being written now, by what you do. The Enochic books end with judgment and a new heaven; Revelation ends with a city and an open gate. The Archive's label says only: PENDING TESTIMONY.",
+    "unlocked_by": "Reaching the depths of Revelation in a single run.",
+    "relevance": "Your Revelation meter is not a power gauge. It is a manuscript filling in. This entry suggests the prototype's hidden routes — the Revelation Route and the corruption ending — planned for future expansions.",
+    "mystery": "The shelf is at your eye level. Exactly."
+  }
+}

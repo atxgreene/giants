@@ -1,0 +1,32 @@
+{
+  "vitality": {
+    "name": "Witness's Endurance",
+    "desc": "+15 Maximum Health per rank.",
+    "max_level": 3, "costs": [30, 60, 90],
+    "mods_per_level": {"max_hp": 15}
+  },
+  "edge": {
+    "name": "Tempered Commission",
+    "desc": "+8% sword damage per rank.",
+    "max_level": 3, "costs": [35, 70, 110],
+    "mods_per_level": {"sword_dmg": 0.08}
+  },
+  "swiftness": {
+    "name": "Sandals of the Messenger",
+    "desc": "Dash recovers 12% faster per rank.",
+    "max_level": 2, "costs": [40, 80],
+    "mods_per_level": {"dash_cd": -0.12}
+  },
+  "zeal": {
+    "name": "Kindled Zeal",
+    "desc": "Ultimate charges 15% faster per rank.",
+    "max_level": 2, "costs": [45, 90],
+    "mods_per_level": {"ult_charge_mult": 0.15}
+  },
+  "favor": {
+    "name": "Standing Commission",
+    "desc": "Begin every run with a random blessing of Michael.",
+    "max_level": 1, "costs": [120],
+    "mods_per_level": {}
+  }
+}
