@@ -79,6 +79,22 @@ func _input(event: InputEvent) -> void:
 		using_controller = true
 	elif event is InputEventMouseMotion or event is InputEventMouseButton:
 		using_controller = false
+	elif event is InputEventScreenTouch or event is InputEventScreenDrag:
+		using_controller = false
+		# Basic touch-to-mouse simulation for web/mobile
+		if event is InputEventScreenTouch:
+			var mouse_event := InputEventMouseButton.new()
+			mouse_event.button_index = MOUSE_BUTTON_LEFT
+			mouse_event.pressed = event.pressed
+			mouse_event.position = event.position
+			mouse_event.global_position = event.position
+			Input.parse_input_event(mouse_event)
+		elif event is InputEventScreenDrag:
+			var mouse_motion := InputEventMouseMotion.new()
+			mouse_motion.position = event.position
+			mouse_motion.global_position = event.position
+			mouse_motion.relative = event.relative
+			Input.parse_input_event(mouse_motion)
 
 func _physics_process(delta: float) -> void:
 	anim_t += delta
