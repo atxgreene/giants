@@ -49,6 +49,8 @@ var slowmo_cd_t := 0.0
 var hurt_flash := 0.0
 var anim_t := 0.0
 var swing_vis := 0.0         # 0..1 visual swing progress
+var ghost_tick := 0.0        # dash afterimage spawner
+var trail: Array = []        # sword trail ribbon: [{p: Vector2, t: float}]
 
 func _ready() -> void:
 	add_to_group("player")
@@ -91,13 +93,28 @@ func _physics_process(delta: float) -> void:
 	_update_attack(delta)
 	_update_movement(delta)
 	move_and_slide()
-	if dashing and RunState.has_mod("flame_trail"):
-		trail_tick -= delta
-		if trail_tick <= 0.0:
-			trail_tick = 0.045
-			GroundHazard.spawn(get_parent(), global_position,
-				{"kind": "pool", "radius": 26.0, "active": 1.4, "dps": 14.0,
-				 "friendly": true, "color": Color(1.0, 0.55, 0.15)})
+	if dashing:
+		ghost_tick -= delta
+		if ghost_tick <= 0.0:
+			ghost_tick = 0.035
+			FX.ghost(global_position, facing,
+				Color(1.0, 0.6, 0.25) if RunState.has_mod("flame_trail") else Color(0.5, 0.6, 0.9))
+		if RunState.has_mod("flame_trail"):
+			trail_tick -= delta
+			if trail_tick <= 0.0:
+				trail_tick = 0.045
+				GroundHazard.spawn(get_parent(), global_position,
+					{"kind": "pool", "radius": 26.0, "active": 1.4, "dps": 14.0,
+					 "friendly": true, "color": Color(1.0, 0.55, 0.15)})
+	# sword trail ribbon
+	if swing_vis > 0.0 or dashing:
+		trail.append({"p": _sword_tip_global(), "t": 0.18})
+	for seg in trail:
+		seg["t"] -= delta
+	while trail.size() > 0 and float(trail[0]["t"]) <= 0.0:
+		trail.pop_front()
+	if trail.size() > 16:
+		trail.pop_front()
 
 func _tick_timers(delta: float) -> void:
 	dash_cd_t = maxf(dash_cd_t - delta, 0.0)
@@ -408,52 +425,105 @@ func _die() -> void:
 
 # ------------------------------------------------------------------ drawing
 
+func _sword_angle() -> float:
+	var a := aim_dir.angle()
+	if swing_vis > 0.0:
+		a += (1.0 - swing_vis) * 2.4 - 1.2
+	return a
+
+func _sword_tip_global() -> Vector2:
+	var bob := _bob()
+	var hand := Vector2(12 * facing, -10 + bob)
+	return global_position + hand + Vector2.from_angle(_sword_angle()) * 34.0
+
+func _bob() -> float:
+	return sin(anim_t * 9.0) * (1.8 if velocity.length() > 20.0 else 0.6)
+
 func _draw() -> void:
-	# Shadow
-	draw_set_transform(Vector2(0, 10), 0.0, Vector2(1.0, 0.45))
-	draw_circle(Vector2.ZERO, 14.0, Color(0, 0, 0, 0.35))
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	Painter.shadow(self, 13.0, 1.8, 0.34)
 	if dead:
 		draw_circle(Vector2(0, 4), 10.0, Color(0.4, 0.35, 0.3, 0.6))
+		draw_line(Vector2(-8, 2), Vector2(14, -4), Color(0.6, 0.5, 0.35, 0.7), 2.5)
 		return
-	var bob := sin(anim_t * 8.0) * (1.5 if velocity.length() > 20.0 else 0.5)
+	# Sword trail ribbon (drawn under the body, world-space points)
+	if trail.size() > 1:
+		for i in range(trail.size() - 1):
+			var a1 := to_local(trail[i]["p"])
+			var a2 := to_local(trail[i + 1]["p"])
+			var k := float(trail[i]["t"]) / 0.18
+			draw_line(a1, a2, Color(1.0, 0.75, 0.3, 0.45 * k), 2.0 + 4.0 * k)
+	var bob := _bob()
+	var moving := velocity.length() > 20.0
 	var white := clampf(hurt_flash * 4.0, 0.0, 1.0)
-	var cloak := Color(0.22, 0.32, 0.58).lerp(Color.WHITE, white)
-	var trim := Color(0.85, 0.72, 0.38).lerp(Color.WHITE, white)
+	var robe := Color(0.2, 0.3, 0.56).lerp(Color.WHITE, white)
+	var robe_dark := Color(0.13, 0.2, 0.4).lerp(Color.WHITE, white)
+	var trim := Color(0.87, 0.73, 0.38).lerp(Color.WHITE, white)
 	var skin := Color(0.85, 0.72, 0.58).lerp(Color.WHITE, white)
-	if dashing:
-		modulate.a = 0.65
-	else:
-		modulate.a = 1.0
-	# Cloak (robe silhouette)
-	var pts := PackedVector2Array([
-		Vector2(0, -22 + bob), Vector2(10 * facing, -14 + bob),
-		Vector2(12 * facing, 8), Vector2(6 * facing, 12),
-		Vector2(-6 * facing, 12), Vector2(-12 * facing, 6),
-		Vector2(-8 * facing, -14 + bob)])
-	draw_colored_polygon(pts, cloak)
-	draw_polyline(PackedVector2Array([Vector2(-8 * facing, -14 + bob), Vector2(0, -10 + bob), Vector2(10 * facing, -14 + bob)]), trim, 1.5)
-	# Head + hood
-	draw_circle(Vector2(2 * facing, -26 + bob), 6.5, skin)
-	draw_arc(Vector2(1 * facing, -27 + bob), 7.5, PI * 0.9, PI * 2.1, 12, cloak.darkened(0.15), 4.0)
-	# Witness halo (faint mark of commission)
+	var leather := Color(0.35, 0.25, 0.16).lerp(Color.WHITE, white)
+	modulate.a = 0.62 if dashing else 1.0
+	# movement lean + breathing
+	var lean := clampf(velocity.x / 900.0, -0.1, 0.1)
+	var breathe := 1.0 + (0.0 if moving else 0.018 * sin(anim_t * 2.2))
+	draw_set_transform(Vector2(0, 12.0 * (1.0 - breathe)), lean, Vector2(1.0, breathe))
+	# boots (walk cycle peeking under the hem)
+	if moving:
+		var step := sin(anim_t * 13.0) * 5.0
+		draw_circle(Vector2(step, 11), 3.2, leather)
+		draw_circle(Vector2(-step, 11), 3.2, leather)
+	# under-robe with waving hem
+	var hem := PackedVector2Array()
+	hem.append(Vector2(-11 * facing, -14 + bob))
+	hem.append(Vector2(0, -20 + bob))
+	hem.append(Vector2(11 * facing, -14 + bob))
+	for i in 5:
+		var hx := (10.0 - 5.0 * i) * facing
+		hem.append(Vector2(hx, 10.0 + sin(anim_t * 7.0 + i * 1.9) * (1.8 if moving else 0.7)))
+	Painter.outlined(self, hem, robe_dark, 1.6)
+	# over-cloak
+	var cloak := PackedVector2Array([
+		Vector2(0, -23 + bob), Vector2(9 * facing, -15 + bob),
+		Vector2(10 * facing, 4), Vector2(-9 * facing, 6), Vector2(-8 * facing, -15 + bob)])
+	draw_colored_polygon(cloak, robe)
+	# gold trim + clasp
+	draw_polyline(PackedVector2Array([Vector2(-8 * facing, -15 + bob), Vector2(0, -11 + bob), Vector2(9 * facing, -15 + bob)]), trim, 1.6)
+	draw_circle(Vector2(0, -16 + bob), 1.8, trim)
+	# belt + scroll case (the scribe's office)
+	draw_line(Vector2(-9 * facing, 1), Vector2(9 * facing, -1), leather, 2.5)
+	draw_set_transform(Vector2(-8 * facing, 3), 0.5 * facing, Vector2.ONE)
+	draw_rect(Rect2(-2, -6, 4.5, 12), Color(0.72, 0.64, 0.48).lerp(Color.WHITE, white))
+	draw_circle(Vector2(0.2, -6), 2.2, leather)
+	draw_set_transform(Vector2(0, 12.0 * (1.0 - breathe)), lean, Vector2(1.0, breathe))
+	# shoulder mantle + pauldron on the sword arm
+	draw_colored_polygon(PackedVector2Array([
+		Vector2(-9 * facing, -16 + bob), Vector2(0, -21 + bob), Vector2(9 * facing, -16 + bob),
+		Vector2(6 * facing, -11 + bob), Vector2(-6 * facing, -11 + bob)]), robe_dark.darkened(0.1))
+	draw_circle(Vector2(10 * facing, -15 + bob), 4.0, Color(0.55, 0.45, 0.3).lerp(Color.WHITE, white))
+	draw_arc(Vector2(10 * facing, -15 + bob), 4.0, 0, TAU, 10, Painter.OUTLINE, 1.2)
+	# head: face + deep hood
+	draw_circle(Vector2(2.5 * facing, -27 + bob), 6.0, skin)
+	draw_circle(Vector2(4 * facing, -28 + bob), 1.1, Color(0.18, 0.14, 0.1))
+	var hood := PackedVector2Array([
+		Vector2(-5 * facing, -34 + bob), Vector2(2 * facing, -36 + bob),
+		Vector2(8 * facing, -31 + bob), Vector2(7 * facing, -24 + bob),
+		Vector2(2 * facing, -21 + bob), Vector2(-7 * facing, -23 + bob)])
+	var hood_open := PackedVector2Array([
+		Vector2(8 * facing, -31 + bob), Vector2(7 * facing, -24 + bob),
+		Vector2(2 * facing, -21 + bob)])
+	draw_colored_polygon(hood, robe.darkened(0.12))
+	draw_polyline(hood_open, trim, 1.2)
+	# Witness halo — three slow-orbiting marks of commission
 	var halo := trim
-	halo.a = 0.4 + 0.15 * sin(anim_t * 3.0)
-	draw_arc(Vector2(2 * facing, -38 + bob), 7.0, 0, TAU, 16, halo, 1.5)
-	# Sword
-	var hand := Vector2(11 * facing, -8 + bob)
-	var sword_angle := aim_dir.angle()
-	if swing_vis > 0.0:
-		sword_angle += (1.0 - swing_vis) * 2.2 - 1.1
-	var tip := hand + Vector2.from_angle(sword_angle) * 30.0
-	var mid := hand + Vector2.from_angle(sword_angle) * 14.0
-	draw_line(hand, tip, Color(1.0, 0.85, 0.5).lerp(Color.WHITE, white), 3.5)
-	draw_line(hand, mid, Color(1.0, 0.6, 0.2), 5.0)
-	# Flame flicker at the blade
-	var flame := Color(1.0, 0.55 + 0.2 * sin(anim_t * 20.0), 0.15)
-	flame.a = 0.75
-	draw_circle(tip, 3.0 + sin(anim_t * 17.0) * 1.2, flame)
-	# Ult-ready glow
+	halo.a = 0.5 + 0.18 * sin(anim_t * 3.0)
+	draw_arc(Vector2(2 * facing, -40 + bob), 7.5, 0, TAU, 18, halo, 1.4)
+	for i in 3:
+		var ha := anim_t * 1.4 + TAU * i / 3.0
+		draw_circle(Vector2(2 * facing, -40 + bob) + Vector2.from_angle(ha) * 7.5, 1.3, halo)
+	# sword arm + flaming blade
+	var hand := Vector2(12 * facing, -10 + bob)
+	draw_line(Vector2(7 * facing, -15 + bob), hand, skin.darkened(0.1), 3.0)
+	Painter.blade(self, hand, _sword_angle(), 34.0, anim_t)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	# Ult-ready aura
 	if ult_charge >= 100.0:
-		var g := Color(1.0, 0.95, 0.6, 0.25 + 0.12 * sin(anim_t * 6.0))
-		draw_circle(Vector2(0, -12 + bob), 26.0, g)
+		Painter.glow(self, Vector2(0, -14 + bob), 30.0, Color(1.0, 0.95, 0.6, 0.3 + 0.1 * sin(anim_t * 6.0)), 3)
+		Painter.rune_ring(self, Vector2(0, -14 + bob), 24.0 + sin(anim_t * 6.0) * 2.0, Color(1.0, 0.9, 0.55, 0.5), 6, anim_t * 2.0, 1.2)

@@ -5,6 +5,8 @@ extends Node
 
 signal seals_changed(value: int)
 
+const VERSION := "0.2.0"
+
 var main: Node = null
 var profile: Dictionary = {}
 

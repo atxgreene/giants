@@ -16,11 +16,14 @@ static func panel_style(bg := Color(0.07, 0.06, 0.09, 0.94), border := GOLD, bor
 	sb.bg_color = bg
 	sb.border_color = border
 	sb.set_border_width_all(border_w)
-	sb.set_corner_radius_all(4)
+	sb.set_corner_radius_all(5)
 	sb.content_margin_left = 16
 	sb.content_margin_right = 16
 	sb.content_margin_top = 12
 	sb.content_margin_bottom = 12
+	sb.shadow_color = Color(0, 0, 0, 0.4)
+	sb.shadow_size = 6
+	sb.shadow_offset = Vector2(0, 2)
 	return sb
 
 static func label(text: String, size := 16, color := PARCHMENT) -> Label:

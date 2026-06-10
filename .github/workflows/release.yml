@@ -1,0 +1,56 @@
+# Release pipeline: pushing a tag like v0.2.0 builds Windows, macOS, and
+# Linux binaries and attaches them to a GitHub Release.
+# Engine version is pinned; upgrade it in its own PR (see LAUNCH_PLAN.md).
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  export:
+    name: Export game builds
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Import assets
+        run: godot --headless --import || true
+
+      - name: Export — Windows
+        run: |
+          mkdir -p build/windows
+          godot --headless --export-release "Windows Desktop" build/windows/watchers-fall-of-the-giants.exe
+
+      - name: Export — Linux
+        run: |
+          mkdir -p build/linux
+          godot --headless --export-release "Linux" build/linux/watchers-fall-of-the-giants.x86_64
+
+      - name: Export — macOS
+        run: |
+          mkdir -p build/macos
+          godot --headless --export-release "macOS" build/macos/watchers-fall-of-the-giants.zip
+
+      - name: Package
+        run: |
+          cd build
+          zip -r watchers-windows-${{ github.ref_name }}.zip windows
+          zip -r watchers-linux-${{ github.ref_name }}.zip linux
+          mv macos/watchers-fall-of-the-giants.zip watchers-macos-${{ github.ref_name }}.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: "The Watchers: Fall of the Giants ${{ github.ref_name }}"
+          body: "See CHANGELOG.md for what changed in this version. To play: download the build for your platform, extract, and run. (macOS builds are unsigned — right-click → Open the first time.)"
+          files: |
+            build/watchers-windows-${{ github.ref_name }}.zip
+            build/watchers-linux-${{ github.ref_name }}.zip
+            build/watchers-macos-${{ github.ref_name }}.zip
