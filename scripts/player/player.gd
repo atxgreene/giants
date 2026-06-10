@@ -482,8 +482,9 @@ func _draw() -> void:
 	var bob := _bob()
 	var moving := velocity.length() > 20.0
 	var white := clampf(hurt_flash * 4.0, 0.0, 1.0)
-	var robe := Color(0.2, 0.3, 0.56).lerp(Color.WHITE, white)
-	var robe_dark := Color(0.13, 0.2, 0.4).lerp(Color.WHITE, white)
+	# Palette per the Witness concept art: deep indigo cloth, gold filigree.
+	var robe := Color(0.17, 0.18, 0.32).lerp(Color.WHITE, white)
+	var robe_dark := Color(0.1, 0.11, 0.21).lerp(Color.WHITE, white)
 	var trim := Color(0.87, 0.73, 0.38).lerp(Color.WHITE, white)
 	var skin := Color(0.85, 0.72, 0.58).lerp(Color.WHITE, white)
 	var leather := Color(0.35, 0.25, 0.16).lerp(Color.WHITE, white)
@@ -511,9 +512,23 @@ func _draw() -> void:
 		Vector2(0, -23 + bob), Vector2(9 * facing, -15 + bob),
 		Vector2(10 * facing, 4), Vector2(-9 * facing, 6), Vector2(-8 * facing, -15 + bob)])
 	draw_colored_polygon(cloak, robe)
-	# gold trim + clasp
+	# gold trim + clasp + filigree (concept: gilded script down the robe)
 	draw_polyline(PackedVector2Array([Vector2(-8 * facing, -15 + bob), Vector2(0, -11 + bob), Vector2(9 * facing, -15 + bob)]), trim, 1.6)
 	draw_circle(Vector2(0, -16 + bob), 1.8, trim)
+	var filigree := trim
+	filigree.a = 0.55
+	draw_polyline(PackedVector2Array([
+		Vector2(3 * facing, -10 + bob), Vector2(5 * facing, -4 + bob), Vector2(3 * facing, 2)]), filigree, 1.0)
+	for i in 3:
+		draw_circle(Vector2(4.2 * facing, -7 + bob + i * 4.0), 0.7, filigree)
+	# the Witness's codex tablet, glowing in the off-hand
+	var book_pos := Vector2(-11 * facing, -9 + bob + sin(anim_t * 2.5) * 0.8)
+	Painter.glow(self, book_pos, 8.0, Color(0.45, 0.75, 1.0, 0.4), 2)
+	draw_set_transform(book_pos, -0.18 * facing, Vector2.ONE)
+	draw_rect(Rect2(-3.2, -4.2, 6.4, 8.4), Color(0.16, 0.2, 0.34).lerp(Color.WHITE, white))
+	draw_rect(Rect2(-3.2, -4.2, 6.4, 8.4), trim, false, 1.0)
+	draw_circle(Vector2.ZERO, 1.6, Color(0.6, 0.85, 1.0, 0.9))
+	draw_set_transform(Vector2(0, 12.0 * (1.0 - breathe)), lean, Vector2(1.0, breathe))
 	# belt + scroll case (the scribe's office)
 	draw_line(Vector2(-9 * facing, 1), Vector2(9 * facing, -1), leather, 2.5)
 	draw_set_transform(Vector2(-8 * facing, 3), 0.5 * facing, Vector2.ONE)

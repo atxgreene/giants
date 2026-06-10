@@ -6,14 +6,29 @@ class_name MainMenu
 var anim := 0.0
 var backdrop: SigilBackdrop
 
+const KEY_ART := "res://assets/sprites/key_art.jpg"
+
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	var has_art := ResourceLoader.exists(KEY_ART)
+	if has_art:
+		var art := TextureRect.new()
+		art.texture = load(KEY_ART)
+		art.set_anchors_preset(Control.PRESET_FULL_RECT)
+		art.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		art.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_COVERED
+		art.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		add_child(art)
 	backdrop = SigilBackdrop.new()
+	backdrop.has_key_art = has_art
 	backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
 	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(backdrop)
 	var root := UIKit.center()
 	add_child(root)
+	var menu_panel := PanelContainer.new()
+	menu_panel.add_theme_stylebox_override("panel",
+		UIKit.panel_style(Color(0.05, 0.04, 0.08, 0.78), Color(0.85, 0.72, 0.38, 0.5), 1))
 	var v := UIKit.vbox(10)
 	v.alignment = BoxContainer.ALIGNMENT_CENTER
 	v.add_child(UIKit.title("THE WATCHERS", 52))
@@ -45,7 +60,8 @@ func _ready() -> void:
 	controls.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(UIKit.label(" ", 8))
 	v.add_child(controls)
-	root.add_child(v)
+	menu_panel.add_child(v)
+	root.add_child(menu_panel)
 	var ver := UIKit.label("v" + Game.VERSION + " — vertical slice", 12, UIKit.ASH)
 	ver.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
 	ver.position = Vector2(-190, -30)
@@ -60,6 +76,7 @@ func _menu_btn(text: String) -> Button:
 
 class SigilBackdrop extends Control:
 	var t := 0.0
+	var has_key_art := false
 
 	func _process(delta: float) -> void:
 		t += delta
@@ -69,6 +86,21 @@ class SigilBackdrop extends Control:
 		return absf(fmod(sin(float(i) * 12.9898 + float(j) * 78.233) * 43758.5453, 1.0))
 
 	func _draw() -> void:
+		if has_key_art:
+			# The painted key art is underneath: darken it for legibility,
+			# keep only the living elements (embers + a faint seal ring).
+			draw_rect(Rect2(Vector2.ZERO, size), Color(0.03, 0.02, 0.05, 0.45))
+			draw_rect(Rect2(0, size.y * 0.55, size.x, size.y * 0.45), Color(0.03, 0.02, 0.05, 0.25))
+			var cc := size * 0.5
+			var faint := Color(0.85, 0.72, 0.38, 0.1)
+			draw_arc(cc, 305.0, 0, TAU, 64, faint, 1.5)
+			for i in 18:
+				var cycle := fmod(t * (0.05 + 0.03 * _hash01(i, 5)) + _hash01(i, 6), 1.0)
+				var ex := _hash01(i, 7) * size.x
+				var ey := size.y - cycle * size.y * 0.6
+				draw_circle(Vector2(ex + sin(t * 2.0 + i) * 12.0, ey), 1.3 + _hash01(i, 8),
+					Color(1.0, 0.55, 0.2, (1.0 - cycle) * 0.45))
+			return
 		# night sky gradient (3 bands)
 		draw_rect(Rect2(Vector2.ZERO, size), Color(0.05, 0.04, 0.07))
 		draw_rect(Rect2(0, 0, size.x, size.y * 0.4), Color(0.035, 0.03, 0.06))
