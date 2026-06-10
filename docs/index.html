@@ -78,8 +78,10 @@ header.hero{
   position:relative;overflow:hidden;border-top:none;
   padding:110px 0 96px;text-align:center;
   background:
+    linear-gradient(rgba(13,11,18,.78), rgba(13,11,18,.9)),
     radial-gradient(ellipse 60% 45% at 50% -5%, rgba(90,131,196,.16), transparent 65%),
     radial-gradient(ellipse 75% 55% at 50% 115%, rgba(179,66,47,.14), transparent 60%),
+    url('media/key-art.jpg') center 38%/cover no-repeat,
     var(--obsidian);
 }
 .hero-sigil{width:108px;height:108px;margin:0 auto 30px;display:block;filter:drop-shadow(0 0 28px rgba(217,184,97,.35))}
@@ -118,6 +120,21 @@ header.hero{
 .card h3{font-size:21px;font-weight:600;color:var(--parchment);margin-bottom:8px}
 .card p{font-size:14.5px;color:var(--ash)}
 .card p code{color:var(--gold);background:rgba(217,184,97,.08);padding:1px 6px;border-radius:4px}
+
+/* ---------- gallery ---------- */
+.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:44px}
+.gallery .wide{grid-column:1/-1}
+.shot{position:relative;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;background:var(--obsidian-2)}
+.shot img{display:block;width:100%;height:100%;object-fit:cover;aspect-ratio:3/4;transition:transform .35s ease}
+.shot.wide img{aspect-ratio:21/9;object-position:center 30%}
+.shot:hover img{transform:scale(1.03)}
+.shot figcaption{
+  position:absolute;left:0;right:0;bottom:0;padding:14px 18px 12px;
+  background:linear-gradient(transparent, rgba(10,8,14,.92));
+  font-size:13px;color:var(--parchment);
+}
+.shot figcaption b{display:block;font-family:'Cormorant Garamond';font-size:17px;color:var(--gold)}
+@media(max-width:840px){.gallery{grid-template-columns:1fr 1fr}}
 
 /* ---------- tables ---------- */
 table{width:100%;border-collapse:collapse;margin-top:34px;background:var(--obsidian-2);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;font-size:14.5px}
@@ -206,6 +223,7 @@ footer .brand{font-size:17px}
       <a href="play/" style="color:var(--gold)">▶ Play</a>
       <a href="#overview">Overview</a>
       <a href="#features">Features</a>
+      <a href="#vision">Vision</a>
       <a href="#archive">The Archive</a>
       <a href="#start">Get Started</a>
       <a href="#docs">Documentation</a>
@@ -289,6 +307,20 @@ footer .brand{font-size:17px}
       <div class="card"><div class="icon">🎲</div><h3>Data-driven content</h3><p>Weapons, blessings, enemies, rooms, upgrades, codex entries, and dialogue all live in JSON under <code>data/</code>. Adding an enemy is a stat block, a ~60-line behavior script, and a wave entry.</p></div>
       <div class="card"><div class="icon">🔊</div><h3>Procedural everything</h3><p>All sprites, VFX, rooms, and UI are drawn in code; all 18 sound effects and 3 music loops are synthesized at startup. The repository contains zero binary assets and runs fully offline.</p></div>
       <div class="card"><div class="icon">💾</div><h3>Save &amp; cross-input support</h3><p>Local JSON save (currency, codex, aspects, upgrades, story flags, settings) plus full keyboard/mouse and controller support with a code-registered input map.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="vision">
+  <div class="wrap">
+    <span class="kicker">The Vision</span>
+    <h2>Where the art is going.</h2>
+    <p class="lead">Original concept art for the full production pass. The current build renders everything procedurally to this palette — deep indigo and gold against rust and starfire — and the hand-painted pass (Phase 2) replaces the placeholder bodies with these designs, keeping the telegraph language identical.</p>
+    <div class="gallery">
+      <figure class="shot wide"><img src="media/key-art.jpg" alt="Key art: the Flaming Sword of Commission before the Eye of Revelation, chained over the Desert of Azazel" loading="lazy"><figcaption><b>The Commission</b>The Flaming Sword before the Eye of Revelation — and the giants, half-risen, on the horizon.</figcaption></figure>
+      <figure class="shot"><img src="media/witness.jpg" alt="Concept: the Appointed Witness in dark gold-filigreed robes, flaming sword lowered, codex tablet glowing" loading="lazy"><figcaption><b>The Appointed Witness</b>Indigo and filigree; the blade in one hand, the Archive in the other.</figcaption></figure>
+      <figure class="shot"><img src="media/brute.jpg" alt="Concept: rune-scribed iron-armored brute with hammer and chains" loading="lazy"><figcaption><b>The Iron-Taught</b>Azazel's armor doctrine, worn by something that barely remembers being human.</figcaption></figure>
+      <figure class="shot"><img src="media/first-blade.jpg" alt="Concept: Azazel's First Blade, a rune-covered angel with chain wings and a burning scimitar" loading="lazy"><figcaption><b>Azazel's First Blade</b>The first thing he ever forged. Its wings are chains; its sermon is the sword.</figcaption></figure>
     </div>
   </div>
 </section>

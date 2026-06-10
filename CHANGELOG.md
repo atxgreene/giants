@@ -5,6 +5,25 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versioning
 follows [Semantic Versioning](https://semver.org/) (`0.x` = pre-release:
 minor = feature drop, patch = fixes/balance).
 
+## [0.3.1] — 2026-06-10 — "The Vision"
+
+### Art
+- Integrated project-original concept art (`assets/concept/`): key art now
+  backs the main menu (with darkening overlay, live embers, and a framed
+  menu panel); the player palette matches the Witness concept — deep indigo
+  robes, gold filigree script, and the glowing codex tablet carried in the
+  off-hand.
+- Website: key art behind the hero, new "The Vision" concept gallery
+  (Witness, Iron-Taught, Azazel's First Blade).
+- Animation-reference sheets archived in `assets/concept/` with notes on
+  what the production sprite sheets need (transparent fixed-grid cells)
+  before they can replace the procedural bodies.
+
+### Fixes
+- macOS and Web exports: enabled ETC2/ASTC texture import (required for
+  universal macOS binaries and mobile-targeted web texture compression) —
+  this un-blocks the remaining two CI export targets.
+
 ## [0.3.0] — 2026-06-10 — "The Witness Goes Anywhere"
 
 ### Web & mobile
