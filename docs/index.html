@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Watchers: Fall of the Giants — Isometric Action-Roguelike</title>
+<meta name="description" content="An original isometric action-roguelike vertical slice built in Godot 4. Hunt the works of the fallen Watchers as the Appointed Witness. Free, open, zero external assets.">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --obsidian:#0d0b12;
+  --obsidian-2:#13101a;
+  --obsidian-3:#1a1624;
+  --gold:#d9b861;
+  --gold-dim:#8a7440;
+  --gold-faint:rgba(217,184,97,.14);
+  --parchment:#ebdbb2;
+  --ash:#9a948c;
+  --crimson:#b3422f;
+  --lapis:#5a83c4;
+  --starfire:#73bfff;
+  --green:#7fd49a;
+  --line:rgba(217,184,97,.18);
+  --radius:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  background:var(--obsidian);
+  color:var(--parchment);
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  font-size:16px;line-height:1.65;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.display{font-family:'Cormorant Garamond',Georgia,serif}
+a{color:var(--starfire);text-decoration:none}
+a:hover{text-decoration:underline}
+code,pre{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:.86em}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+section{padding:88px 0;border-top:1px solid var(--line)}
+.kicker{
+  display:block;font-family:'Inter';font-size:12px;font-weight:600;
+  letter-spacing:.22em;text-transform:uppercase;color:var(--gold);
+  margin-bottom:14px;
+}
+h2{font-size:40px;font-weight:600;color:var(--parchment);line-height:1.15;margin-bottom:18px}
+.lead{font-size:18px;color:var(--ash);max-width:760px}
+.lead strong{color:var(--parchment);font-weight:600}
+
+/* ---------- nav ---------- */
+nav{
+  position:sticky;top:0;z-index:50;
+  background:rgba(13,11,18,.86);backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line);
+}
+.nav-inner{display:flex;align-items:center;gap:28px;height:64px}
+.brand{display:flex;align-items:center;gap:11px;font-family:'Cormorant Garamond';font-weight:700;font-size:19px;color:var(--parchment);letter-spacing:.04em;white-space:nowrap}
+.brand img{width:30px;height:30px}
+.nav-links{display:flex;gap:24px;margin-left:auto;align-items:center}
+.nav-links a{color:var(--ash);font-size:14px;font-weight:500}
+.nav-links a:hover{color:var(--parchment);text-decoration:none}
+.btn{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:11px 22px;border-radius:6px;font-size:14px;font-weight:600;
+  border:1px solid var(--gold-dim);color:var(--gold);
+  transition:all .18s ease;white-space:nowrap;
+}
+.btn:hover{background:var(--gold-faint);border-color:var(--gold);text-decoration:none}
+.btn.primary{background:var(--gold);color:#161208;border-color:var(--gold)}
+.btn.primary:hover{background:#e8cd7f}
+.btn.small{padding:8px 16px;font-size:13px}
+
+/* ---------- hero ---------- */
+header.hero{
+  position:relative;overflow:hidden;border-top:none;
+  padding:110px 0 96px;text-align:center;
+  background:
+    radial-gradient(ellipse 60% 45% at 50% -5%, rgba(90,131,196,.16), transparent 65%),
+    radial-gradient(ellipse 75% 55% at 50% 115%, rgba(179,66,47,.14), transparent 60%),
+    var(--obsidian);
+}
+.hero-sigil{width:108px;height:108px;margin:0 auto 30px;display:block;filter:drop-shadow(0 0 28px rgba(217,184,97,.35))}
+.hero h1{font-size:clamp(44px,7vw,76px);font-weight:700;letter-spacing:.05em;line-height:1.02;color:var(--parchment)}
+.hero h1 .gold{color:var(--gold)}
+.hero .sub{font-family:'Cormorant Garamond';font-style:italic;font-size:21px;color:var(--ash);margin:18px auto 8px;max-width:640px}
+.hero .desc{font-size:16px;color:var(--ash);max-width:680px;margin:14px auto 36px}
+.hero .desc strong{color:var(--parchment)}
+.badges{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-bottom:38px}
+.badge{
+  font-size:12px;font-weight:600;letter-spacing:.06em;
+  padding:5px 13px;border-radius:999px;
+  border:1px solid var(--line);color:var(--ash);background:var(--obsidian-2);
+}
+.badge .dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:7px;vertical-align:1px}
+.cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+
+/* ---------- stats band ---------- */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-top:60px}
+.stat{background:var(--obsidian-2);padding:26px 18px;text-align:center}
+.stat b{display:block;font-family:'Cormorant Garamond';font-size:34px;font-weight:700;color:var(--gold);line-height:1}
+.stat span{font-size:12.5px;color:var(--ash);letter-spacing:.04em;text-transform:uppercase;font-weight:500;display:block;margin-top:8px}
+
+/* ---------- feature grid ---------- */
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px;margin-top:44px}
+.card{
+  background:var(--obsidian-2);border:1px solid var(--line);
+  border-radius:var(--radius);padding:26px;
+  transition:border-color .2s ease, transform .2s ease;
+}
+.card:hover{border-color:rgba(217,184,97,.4);transform:translateY(-2px)}
+.card .icon{
+  width:42px;height:42px;border-radius:8px;display:flex;align-items:center;justify-content:center;
+  background:var(--gold-faint);border:1px solid var(--line);margin-bottom:16px;font-size:20px;
+}
+.card h3{font-size:21px;font-weight:600;color:var(--parchment);margin-bottom:8px}
+.card p{font-size:14.5px;color:var(--ash)}
+.card p code{color:var(--gold);background:rgba(217,184,97,.08);padding:1px 6px;border-radius:4px}
+
+/* ---------- tables ---------- */
+table{width:100%;border-collapse:collapse;margin-top:34px;background:var(--obsidian-2);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;font-size:14.5px}
+th{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.1em;color:var(--gold);text-align:left;padding:14px 18px;background:var(--obsidian-3);border-bottom:1px solid var(--line)}
+td{padding:13px 18px;border-bottom:1px solid rgba(217,184,97,.08);color:var(--parchment);vertical-align:top}
+tr:last-child td{border-bottom:none}
+td.muted{color:var(--ash)}
+.tier{display:inline-block;font-size:11.5px;font-weight:600;letter-spacing:.05em;padding:3px 10px;border-radius:999px;border:1px solid;white-space:nowrap}
+.t1{color:#e8d9a8;border-color:#e8d9a833}.t2{color:#b9a6e8;border-color:#b9a6e833}
+.t3{color:#9fd8cd;border-color:#9fd8cd33}.t4{color:#9db4d4;border-color:#9db4d433}
+.t5{color:#e09a66;border-color:#e09a6633}.t6{color:#d97a85;border-color:#d97a8533}
+kbd{
+  font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--parchment);
+  background:var(--obsidian-3);border:1px solid var(--line);border-bottom-width:2px;
+  border-radius:5px;padding:2px 8px;white-space:nowrap;
+}
+
+/* ---------- loop ---------- */
+.loop{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:40px;justify-content:center}
+.loop .step{
+  background:var(--obsidian-2);border:1px solid var(--line);border-radius:8px;
+  padding:12px 18px;font-size:14px;font-weight:500;color:var(--parchment);
+}
+.loop .step em{display:block;font-style:normal;font-size:11.5px;color:var(--ash);margin-top:2px}
+.loop .arrow{color:var(--gold-dim);font-size:18px}
+
+/* ---------- get started ---------- */
+.steps{counter-reset:step;margin-top:40px;display:grid;gap:16px}
+.step-row{display:flex;gap:20px;background:var(--obsidian-2);border:1px solid var(--line);border-radius:var(--radius);padding:24px 26px}
+.step-row::before{
+  counter-increment:step;content:counter(step);
+  font-family:'Cormorant Garamond';font-size:30px;font-weight:700;color:var(--gold);
+  min-width:34px;line-height:1.1;
+}
+.step-row h3{font-size:18px;font-weight:600;margin-bottom:6px;font-family:'Inter'}
+.step-row p{font-size:14.5px;color:var(--ash)}
+pre{
+  background:#0a090e;border:1px solid var(--line);border-radius:8px;
+  padding:14px 18px;margin-top:10px;overflow-x:auto;color:#d9cba6;line-height:1.6;
+}
+.note{
+  margin-top:26px;padding:16px 20px;border-left:3px solid var(--gold);
+  background:var(--gold-faint);border-radius:0 8px 8px 0;font-size:14.5px;color:var(--parchment);
+}
+.note.blue{border-color:var(--lapis);background:rgba(90,131,196,.1)}
+
+/* ---------- two-col ---------- */
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:48px;margin-top:40px}
+@media(max-width:840px){.cols{grid-template-columns:1fr}.nav-links a:not(.btn){display:none}}
+.doclist{display:grid;gap:12px;margin-top:34px}
+.doclink{
+  display:flex;justify-content:space-between;align-items:center;gap:18px;
+  background:var(--obsidian-2);border:1px solid var(--line);border-radius:8px;
+  padding:16px 22px;color:var(--parchment);transition:border-color .2s;
+}
+.doclink:hover{border-color:rgba(217,184,97,.45);text-decoration:none}
+.doclink b{font-size:15px;font-weight:600}
+.doclink span{font-size:13.5px;color:var(--ash)}
+.doclink .go{color:var(--gold);font-size:18px}
+
+/* ---------- roadmap ---------- */
+.phases{margin-top:40px;display:grid;gap:0}
+.phase{display:flex;gap:22px;padding:22px 0;border-bottom:1px solid rgba(217,184,97,.09)}
+.phase:last-child{border-bottom:none}
+.phase .marker{min-width:120px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;padding-top:3px}
+.phase .marker.done{color:var(--green)}
+.phase .marker.now{color:var(--gold)}
+.phase .marker.next{color:var(--ash)}
+.phase h3{font-size:18px;font-family:'Inter';font-weight:600;margin-bottom:4px}
+.phase p{font-size:14.5px;color:var(--ash)}
+
+/* ---------- footer ---------- */
+footer{border-top:1px solid var(--line);padding:54px 0 64px;background:var(--obsidian-2)}
+.foot{display:flex;justify-content:space-between;gap:32px;flex-wrap:wrap}
+footer p{font-size:13.5px;color:var(--ash);max-width:620px}
+footer .brand{font-size:17px}
+.scripture{font-family:'Cormorant Garamond';font-style:italic;font-size:15px;color:var(--gold-dim);margin-top:10px}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap nav-inner">
+    <div class="brand"><img src="favicon.svg" alt=""> THE WATCHERS <span style="color:var(--gold-dim);font-weight:400">/</span> <span style="color:var(--gold)">FALL OF THE GIANTS</span></div>
+    <div class="nav-links">
+      <a href="#overview">Overview</a>
+      <a href="#features">Features</a>
+      <a href="#archive">The Archive</a>
+      <a href="#start">Get Started</a>
+      <a href="#docs">Documentation</a>
+      <a href="#roadmap">Roadmap</a>
+      <a class="btn small" href="https://github.com/atxgreene/giants" target="_blank" rel="noopener">GitHub ↗</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <svg class="hero-sigil" viewBox="0 0 128 128" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <circle cx="64" cy="64" r="50" fill="none" stroke="#d9b861" stroke-width="2.5" opacity=".9"/>
+      <circle cx="64" cy="64" r="40" fill="none" stroke="#8a7440" stroke-width="1.4"/>
+      <g stroke="#d9b861" stroke-width="1.6" opacity=".75">
+        <line x1="64" y1="10" x2="64" y2="22"/><line x1="64" y1="106" x2="64" y2="118"/>
+        <line x1="10" y1="64" x2="22" y2="64"/><line x1="106" y1="64" x2="118" y2="64"/>
+      </g>
+      <path d="M64 22 L70.5 56 L64 106 L57.5 56 Z" fill="#e8c87a"/>
+      <path d="M51 60 L77 60 L73.5 67.5 L54.5 67.5 Z" fill="#a87c34"/>
+      <circle cx="64" cy="64" r="8.5" fill="#5ab0ff"/>
+      <circle cx="64" cy="64" r="3.5" fill="#dff0ff"/>
+    </svg>
+    <h1>THE WATCHERS<br><span class="gold">FALL OF THE GIANTS</span></h1>
+    <p class="sub">"The giants dreamed before the flood. Their dreams were judgments."</p>
+    <p class="desc">An original <strong>isometric action-roguelike</strong> built in Godot 4. You are the Appointed Witness — a mortal commissioned by the archangels to hunt, bind, and expose the works of the fallen Watchers, the Nephilim bloodlines, and the disembodied spirits of the giants.</p>
+    <div class="badges">
+      <span class="badge"><span class="dot" style="background:var(--green)"></span>Playable vertical slice</span>
+      <span class="badge">Godot 4.3+</span>
+      <span class="badge">Windows · macOS · Linux</span>
+      <span class="badge">Keyboard / Mouse / Controller</span>
+      <span class="badge">Zero external assets</span>
+    </div>
+    <div class="cta">
+      <a class="btn primary" href="#start">Get Started — Play in 3 Steps</a>
+      <a class="btn" href="https://github.com/atxgreene/giants" target="_blank" rel="noopener">View Source ↗</a>
+    </div>
+
+    <div class="stats">
+      <div class="stat"><b>9</b><span>Room run · 10 templates</span></div>
+      <div class="stat"><b>6+3</b><span>Enemy types · elite, mini-boss, boss</span></div>
+      <div class="stat"><b>16</b><span>Archangel blessings · 4 pools</span></div>
+      <div class="stat"><b>14</b><span>Codex entries · 6 source tiers</span></div>
+      <div class="stat"><b>0</b><span>External assets · 100% procedural</span></div>
+    </div>
+  </div>
+</header>
+
+<section id="overview">
+  <div class="wrap">
+    <span class="kicker">Overview</span>
+    <h2>Disclosure of a hidden war.</h2>
+    <p class="lead">Drawing on Genesis 6, Daniel, Jude, 2 Peter, Revelation, 1 Enoch, and the Book of Giants fragments, the game renders an ancient-Near-Eastern apocalyptic world: red deserts over buried prisoners, black iron forges still warm, giant ribcages used as architecture. The Watchers themselves are bound — <strong>what you fight are their works</strong>: the cults that re-teach the forbidden arts, the half-blood Nephilim, and the spirits the flood could not drown.</p>
+    <p class="lead" style="margin-top:18px">Each run flows <strong>Watchtower → commission → the Desert of Azazel → elite → mini-boss → Azazel's First Blade</strong>, with Hades-style reward gates between rooms and a Diablo-flavored density of enemies, packs, support casters, and ground hazards. Death returns you to the hub with everything you witnessed — currency, codex pages, and unlocks — intact.</p>
+
+    <div class="loop">
+      <div class="step">Watchtower<em>hub · upgrades · aspects</em></div><span class="arrow">→</span>
+      <div class="step">Commission<em>weapon · dialogue</em></div><span class="arrow">→</span>
+      <div class="step">Desert Run<em>9 rooms · reward gates</em></div><span class="arrow">→</span>
+      <div class="step">Mini-Boss<em>The Half-Buried Giant</em></div><span class="arrow">→</span>
+      <div class="step">Boss<em>Azazel's First Blade · the temptation</em></div><span class="arrow">→</span>
+      <div class="step">Disclosure<em>codex · seals · return</em></div>
+    </div>
+  </div>
+</section>
+
+<section id="features">
+  <div class="wrap">
+    <span class="kicker">Capabilities</span>
+    <h2>Everything in the slice is playable.</h2>
+    <p class="lead">No mockups, no locked doors. Every system below ships working in the current build and was verified end-to-end with automated headless playthroughs.</p>
+    <div class="grid">
+      <div class="card"><div class="icon">⚔️</div><h3>Readable, fast combat</h3><p>Dash with i-frames, 3-hit combo, heavy flame arc, dash slash, crescent special, Binding Seal, and a charged Ultimate — with hit-stop, knockback, stagger/poise, screen shake, and red telegraphs on every enemy intention.</p></div>
+      <div class="card"><div class="icon">🕊️</div><h3>Archangel blessing system</h3><p>Sixteen blessings across four patron pools — Michael (war), Gabriel (revelation), Raphael (healing), Uriel (fire, unlocked by the boss) — stacking data-driven with relics, weapon aspects, and permanent upgrades.</p></div>
+      <div class="card"><div class="icon">⚖️</div><h3>Corruption vs. Revelation</h3><p>Two asymmetric meters. Forbidden gifts grant real power and write something into you — at high Corruption the desert grows stronger and your patrons grow quieter. Revelation pays slowly for witnessing: binding instead of killing, refusing, going untouched.</p></div>
+      <div class="card"><div class="icon">👁️</div><h3>A boss that tempts you</h3><p>Azazel's First Blade fights in three phases — blade halo, forge-fire lanes, summoned shards — and at one-third health stops to make you an offer. Accept the <code>Edge of Azazel</code> and Michael will know. Refuse, and face its desperate hour.</p></div>
+      <div class="card"><div class="icon">🏛️</div><h3>Persistent hub progression</h3><p>The Watchtower Between Worlds: five NPCs with context-aware dialogue, a weapon altar with three sword aspects, a training altar with five permanent upgrades, a blessing preview, a training dummy, and the desert gate.</p></div>
+      <div class="card"><div class="icon">📜</div><h3>The Witness Archive</h3><p>A 14-entry codex where every claim is tagged by source tier — canonical, apocryphal, fragmentary, scholarly, or game-original. The lore's honesty about its own sources is a core feature, not flavor text.</p></div>
+      <div class="card"><div class="icon">🎲</div><h3>Data-driven content</h3><p>Weapons, blessings, enemies, rooms, upgrades, codex entries, and dialogue all live in JSON under <code>data/</code>. Adding an enemy is a stat block, a ~60-line behavior script, and a wave entry.</p></div>
+      <div class="card"><div class="icon">🔊</div><h3>Procedural everything</h3><p>All sprites, VFX, rooms, and UI are drawn in code; all 18 sound effects and 3 music loops are synthesized at startup. The repository contains zero binary assets and runs fully offline.</p></div>
+      <div class="card"><div class="icon">💾</div><h3>Save &amp; cross-input support</h3><p>Local JSON save (currency, codex, aspects, upgrades, story flags, settings) plus full keyboard/mouse and controller support with a code-registered input map.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="archive">
+  <div class="wrap">
+    <span class="kicker">The Witness Archive</span>
+    <h2>Six tiers of truth.</h2>
+    <p class="lead">The game treats Scripture, Enochic tradition, Qumran fragments, scholarship, and its own invention as <strong>distinct layers</strong> — and shows the player which is which. Every codex entry carries one of six source badges. Disputed material is presented as disputed; game fiction is flagged as game fiction.</p>
+    <table>
+      <thead><tr><th style="width:230px">Source Tier</th><th>What belongs here</th><th>Examples in the slice</th></tr></thead>
+      <tbody>
+        <tr><td><span class="tier t1">1 · Canonical Scripture</span></td><td class="muted">Direct biblical text and what it plainly says</td><td>The Nephilim (Gen 6:4) · Michael (Dan 10, Jude 9, Rev 12)</td></tr>
+        <tr><td><span class="tier t2">2 · Enochic Tradition</span></td><td class="muted">1 Enoch / Book of the Watchers; Tobit for Raphael</td><td>The Teaching of Weapons (1 En 8) · giant spirits (1 En 15)</td></tr>
+        <tr><td><span class="tier t3">3 · Book of Giants Fragment</span></td><td class="muted">Qumran fragments (4Q530 etc.) — including their gaps</td><td>The Giants' Dream · the tablet in the water</td></tr>
+        <tr><td><span class="tier t4">4 · Scholarly Reconstruction</span></td><td class="muted">Live academic disputes, presented as disputes</td><td>What "Azazel" names in Leviticus 16</td></tr>
+        <tr><td><span class="tier t5">5 · Game-Original Extrapolation</span></td><td class="muted">Our inventions, honestly flagged</td><td>The Appointed Witness · the Watchtower · the First Blade</td></tr>
+        <tr><td><span class="tier t6">6 · Unknown / Hidden</span></td><td class="muted">The Archive refusing to say</td><td>The Scribe of Dust · the Final Revelation</td></tr>
+      </tbody>
+    </table>
+    <p class="note">Honesty rules, enforced in the writing room: Tier-4 disputes are never stated as settled. Tier-5 inventions are never silently promoted to a lower tier. Tier-6 mysteries may gesture — never assert.</p>
+  </div>
+</section>
+
+<section id="controls">
+  <div class="wrap">
+    <span class="kicker">Controls</span>
+    <h2>Pick up and play.</h2>
+    <table>
+      <thead><tr><th>Action</th><th>Keyboard / Mouse</th><th>Controller</th></tr></thead>
+      <tbody>
+        <tr><td>Move</td><td><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></td><td class="muted">Left stick</td></tr>
+        <tr><td>Aim</td><td><kbd>Mouse</kbd></td><td class="muted">Right stick</td></tr>
+        <tr><td>Light attack <span class="muted">(3-hit combo)</span></td><td><kbd>Left Click</kbd></td><td class="muted">X / Square</td></tr>
+        <tr><td>Heavy flame arc</td><td><kbd>Shift</kbd> or <kbd>Middle Click</kbd></td><td class="muted">Y / Triangle</td></tr>
+        <tr><td>Crescent of holy fire</td><td><kbd>Right Click</kbd></td><td class="muted">Right trigger</td></tr>
+        <tr><td>Dash <span class="muted">(invincibility frames)</span></td><td><kbd>Space</kbd></td><td class="muted">Right shoulder</td></tr>
+        <tr><td>Binding Seal</td><td><kbd>Q</kbd></td><td class="muted">Left shoulder</td></tr>
+        <tr><td>Michael's Verdict <span class="muted">(Ultimate)</span></td><td><kbd>R</kbd></td><td class="muted">B / Circle</td></tr>
+        <tr><td>Interact</td><td><kbd>E</kbd></td><td class="muted">A / Cross</td></tr>
+        <tr><td>Pause</td><td><kbd>Esc</kbd></td><td class="muted">Start</td></tr>
+      </tbody>
+    </table>
+    <p class="note blue"><strong>Field notes:</strong> attack immediately after a dash for the <em>dash slash</em>. Bind giant spirits instead of killing them — bound kills fill Revelation. Brutes shrug off light hits; stagger them with heavies, or take the Aspect of Michael.</p>
+  </div>
+</section>
+
+<section id="start">
+  <div class="wrap">
+    <span class="kicker">Get Started</span>
+    <h2>Playing in three steps.</h2>
+    <p class="lead">No build pipeline, no dependencies, no accounts. The engine is a single executable and the game is this repository.</p>
+    <div class="steps">
+      <div class="step-row"><div>
+        <h3>Install Godot 4.3+ (free, ~100 MB)</h3>
+        <p>Download the standard build for your platform from <a href="https://godotengine.org/download" target="_blank" rel="noopener">godotengine.org/download</a>. On Windows it's a single <code>.exe</code> — no installer required. The .NET build is not needed.</p>
+      </div></div>
+      <div class="step-row"><div>
+        <h3>Get the game</h3>
+        <p>Clone the repository, or download it as a ZIP from GitHub (<em>Code → Download ZIP</em>) and extract it.</p>
+        <pre>git clone https://github.com/atxgreene/giants.git</pre>
+      </div></div>
+      <div class="step-row"><div>
+        <h3>Import and run</h3>
+        <p>Open Godot → <strong>Import</strong> → select <code>project.godot</code> inside the <code>giants</code> folder → <strong>Open</strong> → press <kbd>F5</kbd>. The first launch takes a few seconds while the procedural audio is synthesized.</p>
+        <pre># or, from a terminal:
+godot --path ./giants</pre>
+      </div></div>
+    </div>
+    <p class="note">Save data is written locally to <code>user://watchers_save.json</code> (on Windows: <code>%APPDATA%\Godot\app_userdata\The Watchers — Fall of the Giants\</code>). Deleting it resets all progress.</p>
+  </div>
+</section>
+
+<section id="docs">
+  <div class="wrap">
+    <div class="cols">
+      <div>
+        <span class="kicker">Documentation</span>
+        <h2>Built to be extended.</h2>
+        <p class="lead">The repository ships with a full documentation set: design pillars, a lore bible with the source-tier methodology, an expansion roadmap, and step-by-step recipes for adding weapons, blessings, enemies, rooms, and codex entries.</p>
+        <div class="doclist">
+          <a class="doclink" href="https://github.com/atxgreene/giants#readme" target="_blank" rel="noopener"><div><b>README</b><br><span>Run instructions, controls, what's implemented, extension recipes</span></div><span class="go">↗</span></a>
+          <a class="doclink" href="https://github.com/atxgreene/giants/blob/main/DESIGN_BRIEF.md" target="_blank" rel="noopener"><div><b>DESIGN_BRIEF</b><br><span>Pillars, loops, combat reference tables, architecture map</span></div><span class="go">↗</span></a>
+          <a class="doclink" href="https://github.com/atxgreene/giants/blob/main/LORE_BIBLE.md" target="_blank" rel="noopener"><div><b>LORE_BIBLE</b><br><span>Cosmology, source-tier methodology, characters, biome bible</span></div><span class="go">↗</span></a>
+          <a class="doclink" href="https://github.com/atxgreene/giants/blob/main/ROADMAP.md" target="_blank" rel="noopener"><div><b>ROADMAP</b><br><span>Five expansion phases, from slice hardening to Azazel himself</span></div><span class="go">↗</span></a>
+        </div>
+      </div>
+      <div>
+        <span class="kicker">Architecture</span>
+        <h2>Modular by design.</h2>
+        <p class="lead">38 GDScript modules behind seven autoload singletons. One scene file; everything else is constructed in code, which keeps the diff surface small and the systems testable headlessly.</p>
+        <table>
+          <thead><tr><th>System</th><th>Module</th></tr></thead>
+          <tbody>
+            <tr><td class="muted">Meta-progression &amp; input</td><td><code>core/game_manager.gd</code></td></tr>
+            <tr><td class="muted">Run state &amp; modifier stacking</td><td><code>core/run_manager.gd</code></td></tr>
+            <tr><td class="muted">Rooms, gates &amp; waves</td><td><code>rooms/room.gd</code> · <code>rooms/run_scene.gd</code></td></tr>
+            <tr><td class="muted">Player &amp; weapon kit</td><td><code>player/player.gd</code></td></tr>
+            <tr><td class="muted">Enemy AI state machine</td><td><code>enemies/enemy_base.gd</code> + 9 subclasses</td></tr>
+            <tr><td class="muted">Juice — hit-stop, shake, VFX</td><td><code>core/fx.gd</code></td></tr>
+            <tr><td class="muted">Procedural audio synth</td><td><code>core/audio_manager.gd</code></td></tr>
+            <tr><td class="muted">Codex &amp; save</td><td><code>codex/codex_manager.gd</code> · <code>save/save_manager.gd</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="roadmap">
+  <div class="wrap">
+    <span class="kicker">Roadmap</span>
+    <h2>From slice to full game.</h2>
+    <div class="phases">
+      <div class="phase"><div class="marker done">✓ Shipped</div><div><h3>Phase 1 — Vertical slice</h3><p>Hub, full Desert of Azazel run, elite, mini-boss, three-phase boss with the temptation, 16 blessings, codex, persistence, controller support. Verified with automated headless playthroughs.</p></div></div>
+      <div class="phase"><div class="marker now">● In progress</div><div><h3>Phase 2 — Depth &amp; polish</h3><p>Hand-painted art pass over the procedural placeholders, recorded audio, second weapon (Censer-Flail of Raphael), blessing rarities and duo-blessings, Revelation-gated hidden rooms, balance hardening.</p></div></div>
+      <div class="phase"><div class="marker next">○ Planned</div><div><h3>Phase 3 — The Drowned City of the Bloodlines</h3><p>Second biome: flood-scarred ziggurats, water hazards, Nephilim nobility, and the boss "Shemihazah's Herald."</p></div></div>
+      <div class="phase"><div class="marker next">○ Planned</div><div><h3>Phase 4 — Routes &amp; endings</h3><p>The full-corruption ending, the Revelation Route with a binding-focused pacifist playstyle, and the Scribe of Dust identity questline.</p></div></div>
+      <div class="phase"><div class="marker next">○ Planned</div><div><h3>Phase 5 — The Iron Heavens &amp; the modern day</h3><p>Corrupted pre-flood sky-technology, a modern-earth occult-infiltration epilogue arc, and Azazel — not as a damage sponge, but as the final temptation.</p></div></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap foot">
+    <div>
+      <div class="brand"><img src="favicon.svg" alt="" width="26" height="26"> THE WATCHERS: FALL OF THE GIANTS</div>
+      <p style="margin-top:14px">An original work. All code, art direction, systems, names, and text are original to this project; no proprietary game assets or mechanics are used. The game draws on Genesis 6, Daniel, Jude, 2 Peter, Revelation, 1 Enoch, and the Book of Giants fragments, and deliberately labels canonical, apocryphal, fragmentary, scholarly, and invented material as distinct layers.</p>
+      <p class="scripture">"Not every secret is revelation. Some knowledge opens like a wound." — Gabriel</p>
+    </div>
+    <div style="text-align:right;min-width:200px">
+      <a class="btn" href="https://github.com/atxgreene/giants" target="_blank" rel="noopener">Source on GitHub ↗</a>
+      <p style="margin-top:16px;font-size:12.5px">Built with Godot 4 · GDScript<br>Runs offline · No telemetry</p>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
