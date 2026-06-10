@@ -164,7 +164,8 @@ func _build_music() -> void:
 
 func _render_hub() -> AudioStreamWAV:
 	# Angelic pad: D minor add9 stack with slow tremolo and soft wind.
-	var dur := 8.0
+	# Shorter loop on web to keep WASM startup snappy.
+	var dur := 4.0 if OS.has_feature("web") else 8.0
 	var n := int(dur * MUS_RATE)
 	var s := PackedFloat32Array()
 	s.resize(n)

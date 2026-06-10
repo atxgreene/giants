@@ -5,10 +5,11 @@ extends Node
 
 signal seals_changed(value: int)
 
-const VERSION := "0.2.0"
+const VERSION := "0.3.0"
 
 var main: Node = null
 var profile: Dictionary = {}
+var touch_mode := false
 
 const DEFAULT_PROFILE := {
 	"seals": 0,
@@ -39,6 +40,14 @@ func _ready() -> void:
 	_register_inputs()
 	profile = SaveMan.load_profile(DEFAULT_PROFILE)
 	apply_settings()
+	if DisplayServer.is_touchscreen_available():
+		touch_mode = true
+
+func _input(event: InputEvent) -> void:
+	# A real finger means a touch device; mouse emulated from touch never
+	# arrives as InputEventScreenTouch, so desktops are unaffected.
+	if event is InputEventScreenTouch:
+		touch_mode = true
 
 func goto(screen: String, args: Dictionary = {}) -> void:
 	if main:

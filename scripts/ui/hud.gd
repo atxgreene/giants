@@ -14,6 +14,7 @@ var toast_t := 0.0
 func _ready() -> void:
 	layer = 60
 	add_to_group("hud")
+	add_child(TouchControls.new())
 	draw_node = HudDraw.new()
 	draw_node.set_anchors_preset(Control.PRESET_FULL_RECT)
 	draw_node.mouse_filter = Control.MOUSE_FILTER_IGNORE

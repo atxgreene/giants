@@ -13,8 +13,16 @@ no paid assets, and no internet access required.
 
 ---
 
-## How to run
+## How to play
 
+**In your browser (desktop or mobile):** https://atxgreene.github.io/giants/play/
+— no install. On touchscreens a virtual joystick and action buttons appear
+automatically, with auto-aim. Every push to `main` redeploys this build.
+
+**Pre-built desktop binaries:** download from the repo's GitHub Releases page
+(built automatically for Windows / macOS / Linux on every version tag).
+
+**From source:**
 1. Install **Godot 4.3 or newer** (standard build, free): https://godotengine.org/download
    (The project uses `angle_difference` / `rotate_toward`, added in 4.3.)
 2. Open Godot → **Import** → select this folder's `project.godot` → **Open**.
@@ -44,6 +52,11 @@ Save data is written to `user://watchers_save.json`
 | Michael's Verdict (Ultimate, when charged) | R | B / Circle |
 | Interact | E | A / Cross |
 | Pause | Esc | Start |
+
+**Touch (mobile browser):** left-thumb virtual joystick (press anywhere on the
+lower-left), action buttons on the right (ATK / HVY / CRES / DASH / SEAL /
+ULT / E), pause in the top-right corner. Aim is automatic — the Witness
+targets the nearest threat.
 
 **Tip:** attack immediately after a dash for the *dash slash*. Bind giant
 spirits instead of just killing them — bound kills fill Revelation.
