@@ -54,15 +54,17 @@ protects build quality instead of just producing builds.
 
 ### Added — HD-2D atmosphere pass
 - The 2.5D look now reads like a lit miniature diorama (à la the HD-2D
-  remakes): screen-space **bloom** on the gold/fire/holy elements (HDR-2D +
-  additive WorldEnvironment glow, toggle-gated so it can never black-screen),
-  a **tilt-shift** depth blur top and bottom, drifting **light shafts** from
-  the Eye, and a warm/cool color grade. Applied to the main menu (bloom +
-  shafts), hub, and run. New "Bloom / HD-2D Glow" setting.
-  - A warm additive **Light2D key-light** follows the Witness so the lit-pool
-    look also works on the web/mobile GL-Compatibility renderer (which does
-    not support `WorldEnvironment` 2D glow). Murk (vignette + tilt-shift)
-    toned down and the grade warmed so the scene doesn't read cold.
+  remakes): real screen-space **bloom** on the gold/fire/holy elements, a
+  **tilt-shift** depth blur top and bottom, drifting **light shafts** from the
+  Eye, and a warm/cool color grade. Applied to the main menu, hub, and run.
+  New "Bloom / HD-2D Glow" setting.
+  - Bloom is a `BackBufferCopy` + threshold/blur/add **canvas shader**, so it
+    works on EVERY renderer — including the web/mobile GL-Compatibility
+    backend, where `WorldEnvironment` 2D glow is unavailable. Placed below the
+    HUD so the UI stays crisp.
+  - A warm additive **Light2D key-light** follows the Witness for a lit pool
+    (cool light for the Censer). Murk (vignette + tilt-shift) toned down and
+    the grade warmed so the scene doesn't read cold.
 
 ### Added — Durability & accessibility
 - Save versioning (`save_version`, migration table, pre-migration backup,

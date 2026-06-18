@@ -156,25 +156,63 @@ func attach_atmosphere(parent: Node, kind := "desert") -> void:
 	layer.add_child(atmo)
 	parent.add_child(layer)
 
-## Additive screen bloom only (HD-2D glow), gated by the Bloom setting so it can
-## never black-screen. Safe to add over UI — used on the main menu.
+## Real screen-space bloom that works on EVERY renderer, including the web /
+## mobile GL-Compatibility backend (where WorldEnvironment 2D glow is absent).
+## A BackBufferCopy snapshots the framebuffer, then a full-screen shader
+## extracts the bright pixels, blurs them, and adds them back. Placed at layer
+## 56 so it blooms the world + atmosphere (layers ≤55) but leaves the HUD (60)
+## and touch controls (65) crisp. Gated by the Bloom setting.
 func attach_bloom(parent: Node) -> void:
 	if not bool(Game.setting("bloom")):
 		return
-	var env := Environment.new()
-	env.background_mode = Environment.BG_CANVAS
-	env.glow_enabled = true
-	env.glow_intensity = 0.5
-	env.glow_strength = 1.05
-	env.glow_bloom = 0.12
-	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_SCREEN
-	env.glow_hdr_threshold = 0.92
-	env.set_glow_level(1, 1.0)
-	env.set_glow_level(3, 1.0)
-	env.set_glow_level(5, 1.0)
-	var we := WorldEnvironment.new()
-	we.environment = env
-	parent.add_child(we)
+	var layer := CanvasLayer.new()
+	layer.layer = 56
+	var bb := BackBufferCopy.new()
+	bb.copy_mode = BackBufferCopy.COPY_MODE_VIEWPORT
+	layer.add_child(bb)
+	var rect := ColorRect.new()
+	rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rect.material = _bloom_material()
+	layer.add_child(rect)
+	parent.add_child(layer)
+
+var _bloom_mat: ShaderMaterial = null
+
+func _bloom_material() -> ShaderMaterial:
+	if _bloom_mat == null:
+		var sh := Shader.new()
+		sh.code = BLOOM_SHADER
+		_bloom_mat = ShaderMaterial.new()
+		_bloom_mat.shader = sh
+	return _bloom_mat
+
+const BLOOM_SHADER := "\
+shader_type canvas_item;\n\
+uniform sampler2D screen_tex : hint_screen_texture, filter_linear;\n\
+uniform float threshold : hint_range(0.0, 1.0) = 0.70;\n\
+uniform float intensity : hint_range(0.0, 3.0) = 0.95;\n\
+uniform float spread : hint_range(0.5, 5.0) = 2.6;\n\
+void fragment() {\n\
+	vec2 px = SCREEN_PIXEL_SIZE * spread;\n\
+	vec3 sum = vec3(0.0);\n\
+	float total = 0.0;\n\
+	for (int x = -2; x <= 2; x++) {\n\
+		for (int y = -2; y <= 2; y++) {\n\
+			vec2 off = vec2(float(x), float(y)) * px;\n\
+			vec3 c = texture(screen_tex, SCREEN_UV + off).rgb;\n\
+			float b = max(c.r, max(c.g, c.b));\n\
+			float e = max(b - threshold, 0.0);\n\
+			vec3 bright = c * (e / max(b, 0.0001));\n\
+			float w = 1.0 / (1.0 + float(x * x + y * y));\n\
+			sum += bright * w;\n\
+			total += w;\n\
+		}\n\
+	}\n\
+	vec3 bloom = (sum / total) * intensity;\n\
+	vec3 base = texture(screen_tex, SCREEN_UV).rgb;\n\
+	COLOR = vec4(base + bloom, 1.0);\n\
+}\n"
 
 ## Screen-space vignette + warm grade for the 2.5D look. Add once per screen.
 func attach_vignette(parent: Node) -> void:
