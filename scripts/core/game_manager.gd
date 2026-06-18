@@ -41,7 +41,7 @@ const DEFAULT_PROFILE := {
 		"damage_numbers": true, "screenshake": true, "fullscreen": false,
 		"screenshake_amount": 1.0, "flash_amount": 1.0, "text_scale": 1.0,
 		"high_contrast": false, "colorblind_telegraphs": false,
-		"hold_to_dash": false, "auto_aim_assist": true
+		"hold_to_dash": false, "auto_aim_assist": true, "bloom": true
 	}
 }
 

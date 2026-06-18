@@ -52,6 +52,13 @@ protects build quality instead of just producing builds.
   revelation, bound kills, forbidden gifts accepted/refused, weapon/aspect,
   and codex pages unlocked.
 
+### Added — HD-2D atmosphere pass
+- The 2.5D look now reads like a lit miniature diorama (à la the HD-2D
+  remakes): screen-space **bloom** on the gold/fire/holy elements (HDR-2D +
+  additive WorldEnvironment glow, toggle-gated so it can never black-screen),
+  a **tilt-shift** depth blur top and bottom, drifting **light shafts** from
+  the Eye, and a warm/cool color grade. New "Bloom / HD-2D Glow" setting.
+
 ### Added — Durability & accessibility
 - Save versioning (`save_version`, migration table, pre-migration backup,
   field repair). Old saves load; a corrupt save fails visibly instead of

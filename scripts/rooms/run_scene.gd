@@ -56,7 +56,7 @@ func _ready() -> void:
 	fade_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	fade_layer.add_child(fade_rect)
 	add_child(fade_layer)
-	FX.attach_vignette(self)
+	FX.attach_atmosphere(self, "desert")
 	AudioMan.music("desert")
 	CodexMan.unlock("desert-of-azazel")
 	CodexMan.unlock("watchers")

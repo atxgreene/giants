@@ -107,6 +107,36 @@ func ring(pos: Vector2, color: Color, r_from: float, r_to: float, dur := 0.4) ->
 	r.z_index = 45
 	t.add_child(r)
 
+## HD-2D "diorama under warm light" atmosphere. Adds screen bloom (toggle-gated
+## so it can never black-screen), a tilt-shift depth blur, drifting light shafts
+## from the Eye, and a warm/cool grade — on top of the existing vignette. Add
+## once per screen; everything is freed with the screen.
+func attach_atmosphere(parent: Node, kind := "desert") -> void:
+	if bool(Game.setting("bloom")):
+		var env := Environment.new()
+		env.background_mode = Environment.BG_CANVAS
+		env.glow_enabled = true
+		env.glow_intensity = 0.5
+		env.glow_strength = 1.05
+		env.glow_bloom = 0.12
+		env.glow_blend_mode = Environment.GLOW_BLEND_MODE_SCREEN
+		env.glow_hdr_threshold = 0.92
+		env.set_glow_level(1, 1.0)
+		env.set_glow_level(3, 1.0)
+		env.set_glow_level(5, 1.0)
+		var we := WorldEnvironment.new()
+		we.environment = env
+		parent.add_child(we)
+	attach_vignette(parent)
+	var layer := CanvasLayer.new()
+	layer.layer = 54
+	var atmo := Atmosphere.new()
+	atmo.kind = kind
+	atmo.set_anchors_preset(Control.PRESET_FULL_RECT)
+	atmo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	layer.add_child(atmo)
+	parent.add_child(layer)
+
 ## Screen-space vignette + warm grade for the 2.5D look. Add once per screen.
 func attach_vignette(parent: Node) -> void:
 	var layer := CanvasLayer.new()
@@ -159,6 +189,61 @@ func flash_screen(color := Color(1, 1, 1, 0.35), dur := 0.25) -> void:
 	tw.tween_callback(layer.queue_free)
 
 # ------------------------------------------------------------- inner classes
+
+class Atmosphere extends Control:
+	## Screen-space HD-2D pass: tilt-shift depth bands (top/bottom), drifting
+	## light shafts from the upper "Eye", and a gentle warm/cool grade. Pure
+	## drawing — it can darken/tint but never blank the framebuffer.
+	var kind := "desert"
+	var t := 0.0
+
+	func _process(delta: float) -> void:
+		t += delta
+		queue_redraw()
+
+	func _draw() -> void:
+		var vp := get_viewport_rect().size
+		var warm := Color(1.0, 0.72, 0.4)
+		var cool := Color(0.35, 0.45, 0.75)
+		if kind == "hub":
+			warm = Color(0.85, 0.78, 0.55)
+			cool = Color(0.3, 0.4, 0.7)
+		elif kind == "boss":
+			warm = Color(1.0, 0.5, 0.25)
+			cool = Color(0.45, 0.3, 0.4)
+		# --- tilt-shift: soft dark focal bands top and bottom (fakes DOF).
+		# Kept light enough that enemies near the edges stay readable. ---
+		var band := vp.y * 0.17
+		_grad_band(Rect2(0, 0, vp.x, band), Color(0.02, 0.02, 0.05, 0.38), Color(0.02, 0.02, 0.05, 0.0), true)
+		_grad_band(Rect2(0, vp.y - band, vp.x, band), Color(0.03, 0.02, 0.04, 0.0), Color(0.03, 0.02, 0.04, 0.42), true)
+		# --- warm/cool vertical grade (lit-diorama feel) ---
+		var top_tint := cool
+		top_tint.a = 0.10
+		var bot_tint := warm
+		bot_tint.a = 0.10
+		_grad_band(Rect2(0, 0, vp.x, vp.y), top_tint, bot_tint, true)
+		# --- drifting light shafts from the Eye (upper centre) ---
+		var src := Vector2(vp.x * 0.5, -vp.y * 0.12)
+		for i in 5:
+			var phase := t * 0.12 + float(i) * 1.7
+			var sway := sin(phase) * vp.x * 0.04
+			var x_mid := vp.x * 0.5 + sway + (float(i) - 2.0) * vp.x * 0.12
+			var w := vp.x * 0.05
+			var a := 0.05 + 0.025 * sin(t * 0.7 + float(i))
+			var c := warm
+			c.a = maxf(a, 0.02)
+			draw_colored_polygon(PackedVector2Array([
+				src + Vector2(-6, 0), src + Vector2(6, 0),
+				Vector2(x_mid + w, vp.y), Vector2(x_mid - w, vp.y)]), c)
+
+	func _grad_band(rect: Rect2, c_top: Color, c_bot: Color, vertical: bool) -> void:
+		# Cheap vertical gradient via a stack of thin rects.
+		var steps := 24
+		for i in steps:
+			var k := float(i) / float(steps - 1)
+			var c := c_top.lerp(c_bot, k) if vertical else c_top
+			var y := rect.position.y + rect.size.y * (float(i) / steps)
+			draw_rect(Rect2(rect.position.x, y, rect.size.x, rect.size.y / steps + 1.0), c)
 
 class DamageNumber extends Node2D:
 	var text_value := "0"

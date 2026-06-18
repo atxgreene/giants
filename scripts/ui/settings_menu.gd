@@ -22,6 +22,7 @@ func _ready() -> void:
 	v.add_child(_slider_row("Music Volume", "music"))
 	v.add_child(_slider_row("Effects Volume", "sfx"))
 	v.add_child(UIKit.label("— DISPLAY —", 14, UIKit.GOLD))
+	v.add_child(_check_row("Bloom / HD-2D Glow", "bloom"))
 	v.add_child(_check_row("Damage Numbers", "damage_numbers"))
 	v.add_child(_check_row("Screen Shake", "screenshake"))
 	v.add_child(_slider_row("Screen Shake Amount", "screenshake_amount", 0.0, 1.5))

@@ -24,7 +24,7 @@ func _ready() -> void:
 	cam.set_limits(room.bounds)
 	hud = HUD.new()
 	add_child(hud)
-	FX.attach_vignette(self)
+	FX.attach_atmosphere(self, "hub")
 	hud.set_room_label("The Watchtower Between Worlds", 0, 0)
 	_populate()
 	AudioMan.music("hub")
