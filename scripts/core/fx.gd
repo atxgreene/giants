@@ -44,7 +44,7 @@ func slowmo(scale := 0.35, dur := 0.55) -> void:
 
 func shake(amount: float) -> void:
 	if camera != null and is_instance_valid(camera) and Game.setting("screenshake"):
-		camera.add_trauma(amount)
+		camera.add_trauma(amount * float(Game.setting("screenshake_amount")))
 
 func damage_number(pos: Vector2, amount: float, color := Color(1, 0.9, 0.6)) -> void:
 	if not Game.setting("damage_numbers"):
@@ -143,9 +143,13 @@ func ghost(pos: Vector2, facing: float, color := Color(0.45, 0.55, 0.85)) -> voi
 	t.add_child(g)
 
 func flash_screen(color := Color(1, 1, 1, 0.35), dur := 0.25) -> void:
+	var intensity := float(Game.setting("flash_amount"))
+	if intensity <= 0.01:
+		return
 	var layer := CanvasLayer.new()
 	layer.layer = 90
 	var rect := ColorRect.new()
+	color.a *= clampf(intensity, 0.0, 1.0)
 	rect.color = color
 	rect.set_anchors_preset(Control.PRESET_FULL_RECT)
 	layer.add_child(rect)

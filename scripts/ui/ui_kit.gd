@@ -26,10 +26,17 @@ static func panel_style(bg := Color(0.07, 0.06, 0.09, 0.94), border := GOLD, bor
 	sb.shadow_offset = Vector2(0, 2)
 	return sb
 
+static func text_scale() -> float:
+	# Accessibility text scale, applied to every UIKit-built label/button.
+	return clampf(float(Game.setting("text_scale")), 0.7, 2.0)
+
+static func scaled(size: int) -> int:
+	return int(round(float(size) * text_scale()))
+
 static func label(text: String, size := 16, color := PARCHMENT) -> Label:
 	var l := Label.new()
 	l.text = text
-	l.add_theme_font_size_override("font_size", size)
+	l.add_theme_font_size_override("font_size", scaled(size))
 	l.add_theme_color_override("font_color", color)
 	return l
 
@@ -43,7 +50,7 @@ static func title(text: String, size := 30, color := GOLD) -> Label:
 static func button(text: String, size := 18) -> Button:
 	var b := Button.new()
 	b.text = text
-	b.add_theme_font_size_override("font_size", size)
+	b.add_theme_font_size_override("font_size", scaled(size))
 	b.add_theme_color_override("font_color", PARCHMENT)
 	b.add_theme_color_override("font_hover_color", GOLD.lightened(0.2))
 	b.add_theme_color_override("font_focus_color", GOLD.lightened(0.2))

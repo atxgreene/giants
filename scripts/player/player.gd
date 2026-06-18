@@ -148,6 +148,11 @@ func _tick_timers(delta: float) -> void:
 func _update_aim() -> void:
 	if Game.touch_mode:
 		# Touch: auto-aim the nearest living enemy; fall back to move direction.
+		if not bool(Game.setting("auto_aim_assist")):
+			if move_dir.length() > 0.1:
+				aim_dir = move_dir.normalized()
+			facing = 1.0 if aim_dir.x >= 0.0 else -1.0
+			return
 		var best: Node2D = null
 		var best_d := 560.0
 		for e in get_tree().get_nodes_in_group("enemies"):
@@ -178,7 +183,7 @@ func _read_combat_input() -> void:
 		_try_attack("light")
 	elif Input.is_action_just_pressed("attack_heavy"):
 		_try_attack("heavy")
-	if Input.is_action_just_pressed("dash"):
+	if Input.is_action_just_pressed("dash") or (Game.setting("hold_to_dash") and Input.is_action_pressed("dash")):
 		_try_dash()
 	if Input.is_action_just_pressed("special"):
 		_try_special()

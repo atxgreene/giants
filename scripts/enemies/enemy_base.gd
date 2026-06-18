@@ -385,11 +385,20 @@ func _draw_status() -> void:
 			var a := TAU * i / 6.0 + anim_t * 2.0
 			draw_line(Vector2.from_angle(a) * (hit_radius + 2.0), Vector2.from_angle(a) * (hit_radius + 10.0), gold, 2.0)
 
+func _telegraph_color() -> Color:
+	# Default danger red, but accessibility settings can swap to a
+	# colorblind-safe high-contrast hue that does not rely on red/green.
+	if bool(Game.setting("colorblind_telegraphs")):
+		return Color(1.0, 0.85, 0.1)
+	if bool(Game.setting("high_contrast")):
+		return Color(1.0, 0.35, 0.3)
+	return Color(0.95, 0.25, 0.2)
+
 func _draw_telegraph() -> void:
 	if telegraph.is_empty() or state != "windup":
 		return
 	var prog := windup_progress()
-	var c := Color(0.95, 0.25, 0.2)
+	var c := _telegraph_color()
 	match str(telegraph.get("kind", "")):
 		"cone":
 			var dir: Vector2 = telegraph["dir"]

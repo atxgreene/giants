@@ -203,7 +203,13 @@ func _offer_blessings() -> void:
 		return
 	candidates.shuffle()
 	var cards: Array = []
-	for b in candidates.slice(0, 3):
+	# Hades-style duo: if the Witness already holds blessings from two pools,
+	# offer the bond between them in place of one ordinary card.
+	var duo := _available_duo()
+	if not duo.is_empty():
+		cards.append({"id": duo["id"], "name": "✦ " + str(duo["name"]) + " (Duo)",
+			"desc": str(duo["desc"]), "color": Color(0.96, 0.93, 0.78)})
+	for b in candidates.slice(0, 3 - cards.size()):
 		cards.append({"id": b["id"], "name": b["name"], "desc": b["desc"],
 			"color": Color(str(pool["color"]))})
 	var rs := RewardScreen.new()
@@ -215,6 +221,28 @@ func _offer_blessings() -> void:
 			RunState.add_blessing(id)
 			player.refresh_stats())
 	add_child(rs)
+
+func _available_duo() -> Dictionary:
+	# A duo unlocks once the Witness holds at least one blessing from each of
+	# its two required pools and does not already have it.
+	var owned_pools := {}
+	for id in RunState.blessings:
+		var b := DataDB.blessing_by_id(id)
+		var p := str(b.get("pool", ""))
+		if p in ["michael", "gabriel", "raphael", "uriel"]:
+			owned_pools[p] = true
+	for duo in DataDB.blessings.get("duos", []):
+		if duo["id"] in RunState.blessings:
+			continue
+		var reqs: Array = duo.get("requires", [])
+		var ok := true
+		for r in reqs:
+			if not owned_pools.has(r):
+				ok = false
+				break
+		if ok:
+			return duo
+	return {}
 
 func _offer_forbidden() -> void:
 	var cards: Array = []

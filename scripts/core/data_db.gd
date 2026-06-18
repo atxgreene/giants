@@ -50,6 +50,11 @@ func blessing_by_id(id: String) -> Dictionary:
 			var copy: Dictionary = r.duplicate()
 			copy["pool"] = "relic"
 			return copy
+	for duo in blessings.get("duos", []):
+		if duo["id"] == id:
+			var copy: Dictionary = duo.duplicate()
+			copy["pool"] = "duo"
+			return copy
 	return {}
 
 func pool_color(pool_key: String) -> Color:
@@ -57,6 +62,8 @@ func pool_color(pool_key: String) -> Color:
 		return Color(blessings["pools"][pool_key]["color"])
 	if pool_key == "forbidden":
 		return Color(0.75, 0.15, 0.2)
+	if pool_key == "duo":
+		return Color(0.96, 0.93, 0.78)
 	return Color(0.7, 0.5, 0.9)
 
 func dialogue_lines(key: String) -> Array:
