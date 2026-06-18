@@ -9,8 +9,30 @@ extends Node
 const SFX_RATE := 22050
 const MUS_RATE := 16000
 
+const SFX_DIR := "res://assets/audio/"
+const MUSIC_DIR := "res://assets/music/"
+
+## Music state → {file: external .ogg basename, gen: generated fallback key}.
+## Lookup order is: external file exists → use it; otherwise generated fallback.
+const MUSIC_STATES := {
+	"hub": {"file": "hub_theme", "gen": "hub"},
+	"desert": {"file": "desert_combat", "gen": "desert"},
+	"desert_calm": {"file": "desert_calm", "gen": "hub"},
+	"combat_low": {"file": "combat_low", "gen": "desert"},
+	"combat_high": {"file": "combat_high", "gen": "desert"},
+	"elite": {"file": "elite", "gen": "boss"},
+	"miniboss": {"file": "miniboss", "gen": "boss"},
+	"boss": {"file": "boss_theme", "gen": "boss"},
+	"boss_p1": {"file": "boss_phase_1", "gen": "boss"},
+	"boss_p2": {"file": "boss_phase_2", "gen": "boss"},
+	"boss_p3": {"file": "boss_phase_3", "gen": "boss"},
+	"victory": {"file": "victory", "gen": "hub"},
+	"death": {"file": "death", "gen": "hub"},
+}
+
 var sfx: Dictionary = {}
 var music_tracks: Dictionary = {}
+var generated_music: Dictionary = {}
 var players: Array = []
 var music_player: AudioStreamPlayer
 var current_track := ""
@@ -33,6 +55,31 @@ func _ready() -> void:
 	add_child(music_player)
 	_build_sfx()
 	_build_music()
+	_apply_external_overrides()
+
+func _apply_external_overrides() -> void:
+	# Prefer real recordings dropped into assets/ over the procedural buffers.
+	for name in sfx.keys():
+		var ext := _load_external(SFX_DIR + str(name) + ".wav")
+		if ext != null:
+			sfx[name] = ext
+	for state in MUSIC_STATES:
+		var info: Dictionary = MUSIC_STATES[state]
+		var ext_music := _load_external(MUSIC_DIR + str(info["file"]) + ".ogg")
+		if ext_music != null:
+			music_tracks[state] = ext_music
+		elif generated_music.has(info["gen"]):
+			music_tracks[state] = generated_music[info["gen"]]
+
+func _load_external(path: String):
+	# Imported resources load normally; raw-dropped .ogg can load at runtime.
+	if ResourceLoader.exists(path):
+		var res = ResourceLoader.load(path)
+		if res is AudioStream:
+			return res
+	if path.ends_with(".ogg") and FileAccess.file_exists(path):
+		return AudioStreamOggVorbis.load_from_file(path)
+	return null
 
 func set_volumes(music_v: float, sfx_v: float) -> void:
 	var mi := AudioServer.get_bus_index("Music")
@@ -158,9 +205,13 @@ func _gen(dur: float, fn: Callable) -> AudioStreamWAV:
 # ------------------------------------------------------------------ music
 
 func _build_music() -> void:
-	music_tracks["hub"] = _render_hub()
-	music_tracks["desert"] = _render_desert()
-	music_tracks["boss"] = _render_boss()
+	# Generated fallbacks. Every music state maps to one of these unless an
+	# external file overrides it in _apply_external_overrides().
+	generated_music["hub"] = _render_hub()
+	generated_music["desert"] = _render_desert()
+	generated_music["boss"] = _render_boss()
+	for state in MUSIC_STATES:
+		music_tracks[state] = generated_music[MUSIC_STATES[state]["gen"]]
 
 func _render_hub() -> AudioStreamWAV:
 	# Angelic pad: D minor add9 stack with slow tremolo and soft wind.

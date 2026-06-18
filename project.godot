@@ -15,6 +15,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 DataDB="*res://scripts/core/data_db.gd"
+Assets="*res://scripts/core/asset_registry.gd"
 SaveMan="*res://scripts/save/save_manager.gd"
 AudioMan="*res://scripts/core/audio_manager.gd"
 FX="*res://scripts/core/fx.gd"

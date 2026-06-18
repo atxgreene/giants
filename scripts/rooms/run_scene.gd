@@ -109,7 +109,11 @@ func _swap_room() -> void:
 	if room.kind == "boss":
 		AudioMan.music("boss")
 		Game.toast("\"You call this judgment? I gave mankind the blade. You gave them silence.\"", Color(0.95, 0.8, 0.45))
-	elif bool(room.template.get("corrupted", false)):
+	elif room.kind == "miniboss":
+		AudioMan.music("miniboss")
+	else:
+		AudioMan.music("desert")
+	if bool(room.template.get("corrupted", false)):
 		Game.toast("This ground is defiled. The fallen are stronger here.", Color(0.8, 0.3, 0.4))
 		AudioMan.play("whisper")
 	match room.kind:
