@@ -252,6 +252,9 @@ func take_hit(amount: float, from_pos: Vector2, kb := 120.0, stagger := 1.0, opt
 		final *= 1.2 + RunState.mod("mark_dmg")
 	if armored and float(opts.get("armored_bonus", 0.0)) > 0.0:
 		final *= 1.0 + float(opts["armored_bonus"])
+	# Aspect of Mercy: the bound are struck more gently, but yield more sight.
+	if bound_t > 0.0 and RunState.mod("bound_dmg_reduce") > 0.0:
+		final *= 1.0 - clampf(RunState.mod("bound_dmg_reduce"), 0.0, 0.9)
 	final *= damage_taken_mult()
 	hp -= final
 	flash_t = 0.12
@@ -300,7 +303,7 @@ func die() -> void:
 		RunState.kills += 1
 		if bound_t > 0.0:
 			RunState.bound_kills += 1
-			RunState.add_revelation(3.0)
+			RunState.add_revelation(3.0 + 4.0 * RunState.mod("bound_rev"))
 		if elite:
 			RunState.add_revelation(10.0)
 			Game.toast("Elite destroyed. Revelation stirs.", Color(0.45, 0.75, 1.0))

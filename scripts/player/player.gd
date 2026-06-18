@@ -14,6 +14,7 @@ const DASH_TIME := 0.16
 const BASE_DASH_CD := 0.95
 
 var weapon: Dictionary = {}
+var weapon_style := "sword"
 var max_hp := 100.0
 var hp := 100.0
 var dead := false
@@ -61,7 +62,11 @@ func _ready() -> void:
 	sh.radius = 11.0
 	cs.shape = sh
 	add_child(cs)
-	weapon = DataDB.weapons["flaming_sword"]
+	var weapon_id := str(Game.profile.get("weapon", "flaming_sword"))
+	if not DataDB.weapons.has(weapon_id):
+		weapon_id = "flaming_sword"
+	weapon = DataDB.weapons[weapon_id]
+	weapon_style = str(weapon.get("style", "sword"))
 	refresh_stats()
 	if RunState.active and RunState.run_hp > 0.0:
 		hp = minf(RunState.run_hp, max_hp)
@@ -273,7 +278,12 @@ func _strike() -> void:
 				on_dealt(dmg, e)
 				hits += 1
 	var col := Color(1.0, 0.72, 0.3) if not atk_is_heavy else Color(1.0, 0.5, 0.15)
+	if weapon_style == "censer":
+		col = Color(0.7, 0.88, 0.7) if not atk_is_heavy else Color(0.6, 0.85, 0.95)
 	FX.slash(global_position, atk_dir, reach, arc, col)
+	if int(atk.get("cleanse", 0)) > 0:
+		# Censer overhead slam: a short cleanse pulse where it lands.
+		_place_cleanse_pulse(global_position + atk_dir * reach * 0.5)
 	if hits > 0:
 		AudioMan.play("hit_heavy" if atk_is_heavy else "hit")
 		FX.hitstop(0.07 if atk_is_heavy else 0.045)
@@ -283,6 +293,14 @@ func _strike() -> void:
 		combo_t = 0.95
 	else:
 		combo_idx = 0
+
+func _place_cleanse_pulse(pos: Vector2) -> void:
+	GroundHazard.spawn(get_parent(), pos, {
+		"kind": "cleanse", "radius": 70.0, "active": 1.2,
+		"dps": 12.0 * (1.0 + RunState.mod("dmg_mult")), "friendly": true,
+		"cleanse": true, "convert_pools": RunState.has_mod("convert_pools"),
+		"color": Color(0.6, 0.9, 0.95)})
+	FX.ring(pos, Color(0.7, 0.95, 1.0), 14.0, 70.0, 0.3)
 
 func _try_dash() -> void:
 	if dashing or dash_cd_t > 0.0:
@@ -307,11 +325,32 @@ func _try_special() -> void:
 	if special_cd_t > 0.0 or state == "attack":
 		return
 	special_cd_t = float(weapon["special"]["cd"])
+	if str(weapon["special"].get("behavior", "crescent")) == "cleanse_zone":
+		_place_cleanse_zone(global_position + aim_dir * 70.0)
+		AudioMan.play("seal")
+		FX.shake(0.1)
+		return
 	_fire_crescent(aim_dir)
 	if RunState.has_mod("extra_projectile"):
 		_fire_crescent(aim_dir.rotated(0.22))
 	AudioMan.play("fire")
 	FX.shake(0.12)
+
+func _place_cleanse_zone(pos: Vector2) -> void:
+	## Raphael's Censer: a lingering circle that burns the corrupt, soothes the
+	## Witness's corruption, and (with Dudael) converts enemy pools to safe ash.
+	var sp: Dictionary = weapon["special"]
+	var life := float(sp.get("life", 5.0)) * (1.0 + RunState.mod("cleanse_duration"))
+	GroundHazard.spawn(get_parent(), pos, {
+		"kind": "cleanse",
+		"radius": float(sp.get("radius", 92.0)),
+		"active": life,
+		"dps": float(sp.get("dps", 11.0)) * (1.0 + RunState.mod("dmg_mult")),
+		"friendly": true,
+		"cleanse": true,
+		"convert_pools": RunState.has_mod("convert_pools"),
+		"color": Color(0.55, 0.85, 0.95)})
+	FX.ring(pos, Color(0.6, 0.9, 1.0), 20.0, float(sp.get("radius", 92.0)), 0.4)
 
 func _fire_crescent(dir: Vector2) -> void:
 	var sp: Dictionary = weapon["special"]
@@ -344,6 +383,9 @@ func _try_ultimate() -> void:
 		AudioMan.play("ui")
 		return
 	ult_charge = 0.0
+	if str(weapon["ult"].get("behavior", "verdict")) == "wound_of_world":
+		_ult_wound_of_world()
+		return
 	var cfg: Dictionary = weapon["ult"]
 	var dmg := calc_damage(float(cfg["dmg"]) * (1.0 + RunState.mod("ult_dmg")))
 	var beam_dmg := calc_damage(float(cfg["beam_dmg"]) * (1.0 + RunState.mod("ult_dmg")))
@@ -372,6 +414,39 @@ func _try_ultimate() -> void:
 	FX.flash_screen(Color(1.0, 0.95, 0.8, 0.3), 0.3)
 	FX.hitstop(0.1, 0.04)
 	FX.shake(0.8)
+
+func _ult_wound_of_world() -> void:
+	## Wound of the World: a radial cleanse that staggers every enemy, scrubs the
+	## Witness's own corruption, and pours Revelation for each foe held bound.
+	var cfg: Dictionary = weapon["ult"]
+	var radius := float(cfg.get("radius", 300.0))
+	var dmg := calc_damage(float(cfg.get("dmg", 52.0)) * (1.0 + RunState.mod("ult_dmg")))
+	var stagger := float(cfg.get("stagger", 8.0)) * (1.0 + RunState.mod("stagger_mult"))
+	var opts := hit_opts({})
+	var bound_caught := 0
+	for e in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(e) or e.get("dead"):
+			continue
+		if global_position.distance_to(e.global_position) <= radius + float(e.get("hit_radius")):
+			if float(e.get("bound_t")) > 0.0:
+				bound_caught += 1
+			e.call("take_hit", dmg, global_position, 220.0, stagger, opts)
+			on_dealt(dmg, e)
+	# Scrub corruption, and turn enemy pools to ash across the arena.
+	RunState.add_corruption(-float(cfg.get("corruption_reduce", 25.0)))
+	_place_cleanse_zone(global_position)
+	for h in get_tree().get_nodes_in_group("hazards"):
+		if is_instance_valid(h) and h.has_method("neutralize") and global_position.distance_to(h.global_position) <= radius:
+			h.call("neutralize")
+	if bound_caught > 0:
+		RunState.add_revelation(6.0 * float(bound_caught))
+		Game.toast("The bound are unmade in mercy. Revelation pours in.", Color(0.45, 0.85, 1.0))
+	AudioMan.play("ult")
+	FX.ring(global_position, Color(0.6, 0.9, 1.0), 40.0, radius, 0.55)
+	FX.ring(global_position, Color(0.9, 0.98, 1.0), 20.0, radius * 0.7, 0.4)
+	FX.flash_screen(Color(0.7, 0.9, 1.0, 0.28), 0.3)
+	FX.hitstop(0.1, 0.04)
+	FX.shake(0.7)
 
 # ------------------------------------------------------------------ damage
 
@@ -465,6 +540,29 @@ func _sword_tip_global() -> Vector2:
 
 func _bob() -> float:
 	return sin(anim_t * 9.0) * (1.8 if velocity.length() > 20.0 else 0.6)
+
+func _draw_censer(hand: Vector2) -> void:
+	# A chain swinging a glowing brazier — reach and arc over the sword's point.
+	var ang := _sword_angle()
+	var swing := sin(anim_t * 3.0) * 0.25 + (1.0 - swing_vis) * 1.2 - 0.6
+	var pivot := hand
+	var chain_len := 30.0 + swing_vis * 14.0
+	var head := pivot + Vector2.from_angle(ang + swing) * chain_len
+	# chain links
+	var links := 5
+	for i in links:
+		var t := float(i) / float(links)
+		var p := pivot.lerp(head, t)
+		draw_circle(p, 1.6, Color(0.55, 0.5, 0.45))
+	# censer body (brass bowl) + cleansing glow
+	Painter.glow(self, head, 12.0, Color(0.55, 0.85, 0.95, 0.5), 2)
+	draw_circle(head, 5.5, Color(0.65, 0.5, 0.25))
+	draw_arc(head, 5.5, 0, TAU, 12, Color(0.85, 0.72, 0.4), 1.4)
+	draw_circle(head, 2.6, Color(0.7, 0.95, 1.0, 0.9))
+	# rising incense embers
+	for i in 3:
+		var ep := head + Vector2(sin(anim_t * 4.0 + i * 2.0) * 3.0, -6.0 - i * 3.0 - fmod(anim_t * 14.0, 6.0))
+		draw_circle(ep, 1.2, Color(0.7, 0.92, 1.0, 0.4))
 
 func _draw() -> void:
 	Painter.shadow(self, 13.0, 1.8, 0.34)
@@ -560,10 +658,13 @@ func _draw() -> void:
 	for i in 3:
 		var ha := anim_t * 1.4 + TAU * i / 3.0
 		draw_circle(Vector2(2 * facing, -40 + bob) + Vector2.from_angle(ha) * 7.5, 1.3, halo)
-	# sword arm + flaming blade
+	# weapon arm
 	var hand := Vector2(12 * facing, -10 + bob)
 	draw_line(Vector2(7 * facing, -15 + bob), hand, skin.darkened(0.1), 3.0)
-	Painter.blade(self, hand, _sword_angle(), 34.0, anim_t)
+	if weapon_style == "censer":
+		_draw_censer(hand)
+	else:
+		Painter.blade(self, hand, _sword_angle(), 34.0, anim_t)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	# Ult-ready aura
 	if ult_charge >= 100.0:

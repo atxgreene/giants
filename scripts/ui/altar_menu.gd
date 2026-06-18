@@ -16,7 +16,7 @@ func _ready() -> void:
 	v.custom_minimum_size = Vector2(620, 0)
 	v.add_child(UIKit.title("THE WEAPON ALTAR" if mode == "weapon" else "BLESSING PREVIEW", 26))
 	if mode == "weapon":
-		var sub := UIKit.label("The Flaming Sword of Commission. Its aspects are memories it is willing to relive.", 14, UIKit.ASH)
+		var sub := UIKit.label("Choose the weapon you carry into the desert. Each remembers different things.", 14, UIKit.ASH)
 		sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		v.add_child(sub)
 	rows_box = UIKit.vbox(8)
@@ -43,43 +43,86 @@ func _refresh() -> void:
 		_build_blessing_rows()
 
 func _build_weapon_rows() -> void:
-	var aspects: Dictionary = DataDB.weapons["aspects"]
-	for a_id in aspects:
-		var a: Dictionary = aspects[a_id]
-		var owned: bool = a_id in Game.profile["aspects"]
-		var equipped: bool = Game.profile["aspect"] == a_id
+	# --- Weapon selection -------------------------------------------------
+	rows_box.add_child(UIKit.label("WEAPONS", 17, UIKit.GOLD))
+	for w_id in DataDB.weapons:
+		if w_id == "aspects":
+			continue
+		var w: Dictionary = DataDB.weapons[w_id]
+		var unlocked: bool = Game.weapon_unlocked(w_id)
+		var equipped: bool = Game.current_weapon() == w_id
 		var h := UIKit.hbox(10)
 		var info := UIKit.vbox(2)
 		info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		info.add_child(UIKit.label(str(a["name"]) + ("   — EQUIPPED" if equipped else ""), 16, UIKit.GOLD if equipped else UIKit.PARCHMENT))
-		var d := UIKit.label(str(a["desc"]), 13, UIKit.ASH.lightened(0.2))
+		info.add_child(UIKit.label(str(w["name"]) + ("   — EQUIPPED" if equipped else ""), 16, UIKit.GOLD if equipped else UIKit.PARCHMENT))
+		var d := UIKit.label(str(w.get("desc", "")), 13, UIKit.ASH.lightened(0.2))
 		d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		d.custom_minimum_size = Vector2(420, 0)
 		info.add_child(d)
 		h.add_child(info)
 		if equipped:
 			pass
-		elif owned:
-			var eq := UIKit.button("Equip", 15)
+		elif unlocked:
+			var eq := UIKit.button("Carry", 15)
 			eq.pressed.connect(func():
-				Game.profile["aspect"] = a_id
-				Game.save()
-				RunState.rebuild_mods()
+				Game.equip_weapon(w_id)
 				AudioMan.play("fire")
 				_refresh())
 			h.add_child(eq)
 		else:
-			var cost := int(a["cost"])
-			var buy := UIKit.button("Unlock — %d Seals" % cost, 15)
-			buy.disabled = int(Game.profile["seals"]) < cost
+			var wcost := int(w.get("unlock_cost", 120))
+			var buy := UIKit.button("Unlock — %d Seals" % wcost, 15)
+			buy.disabled = int(Game.profile["seals"]) < wcost
 			buy.pressed.connect(func():
+				if Game.spend_seals(wcost):
+					Game.unlock_weapon(w_id)
+					Game.equip_weapon(w_id)
+					CodexMan.unlock("censer-flail")
+					AudioMan.play("blessing")
+					_refresh())
+			h.add_child(buy)
+		rows_box.add_child(h)
+	rows_box.add_child(UIKit.label(" ", 6))
+	# --- Aspects for the currently-carried weapon -------------------------
+	var cur := Game.current_weapon()
+	rows_box.add_child(UIKit.label("ASPECTS OF " + str(DataDB.weapons[cur]["name"]).to_upper(), 17, UIKit.GOLD))
+	var aspects: Dictionary = DataDB.weapons["aspects"]
+	for a_id in aspects:
+		var a: Dictionary = aspects[a_id]
+		if str(a.get("weapon", "flaming_sword")) != cur:
+			continue
+		var owned: bool = a_id in Game.profile["aspects"]
+		var equipped2: bool = Game.profile["aspect"] == a_id
+		var h2 := UIKit.hbox(10)
+		var info2 := UIKit.vbox(2)
+		info2.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		info2.add_child(UIKit.label(str(a["name"]) + ("   — EQUIPPED" if equipped2 else ""), 16, UIKit.GOLD if equipped2 else UIKit.PARCHMENT))
+		var d2 := UIKit.label(str(a["desc"]), 13, UIKit.ASH.lightened(0.2))
+		d2.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		d2.custom_minimum_size = Vector2(420, 0)
+		info2.add_child(d2)
+		h2.add_child(info2)
+		if equipped2:
+			pass
+		elif owned:
+			var eq2 := UIKit.button("Equip", 15)
+			eq2.pressed.connect(func():
+				Game.equip_aspect(a_id)
+				AudioMan.play("fire")
+				_refresh())
+			h2.add_child(eq2)
+		else:
+			var cost := int(a["cost"])
+			var buy2 := UIKit.button("Unlock — %d Seals" % cost, 15)
+			buy2.disabled = int(Game.profile["seals"]) < cost
+			buy2.pressed.connect(func():
 				if Game.spend_seals(cost):
 					Game.profile["aspects"].append(a_id)
 					Game.save()
 					AudioMan.play("blessing")
 					_refresh())
-			h.add_child(buy)
-		rows_box.add_child(h)
+			h2.add_child(buy2)
+		rows_box.add_child(h2)
 
 func _build_blessing_rows() -> void:
 	for pool_key in DataDB.blessings["pools"]:

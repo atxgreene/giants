@@ -1,7 +1,9 @@
 {
   "flaming_sword": {
     "name": "Flaming Sword of Commission",
+    "style": "sword",
     "desc": "The blade Michael set in your hands at the Watchtower. It remembers the gate of Eden.",
+    "unlocked_by_default": true,
     "light": [
       {"dmg": 11, "range": 88, "arc": 105, "windup": 0.10, "recover": 0.16, "kb": 130, "stagger": 1.0},
       {"dmg": 13, "range": 92, "arc": 115, "windup": 0.10, "recover": 0.16, "kb": 150, "stagger": 1.1},
@@ -9,28 +11,69 @@
     ],
     "heavy": {"dmg": 32, "range": 124, "arc": 170, "windup": 0.34, "recover": 0.42, "kb": 330, "stagger": 3.2},
     "dash_slash": {"dmg": 17, "range": 98, "arc": 95, "windup": 0.05, "recover": 0.14, "kb": 210, "stagger": 1.6},
-    "special": {"dmg": 23, "speed": 540, "radius": 32, "cd": 2.2, "life": 1.1},
+    "special": {"behavior": "crescent", "dmg": 23, "speed": 540, "radius": 32, "cd": 2.2, "life": 1.1},
     "seal": {"dmg": 3, "radius": 88, "duration": 2.7, "cd": 7.0, "arm": 0.35, "cast_range": 250},
-    "ult": {"dmg": 75, "radius": 270, "beam_dmg": 55, "beam_len": 520, "beam_w": 110}
+    "ult": {"behavior": "verdict", "dmg": 75, "radius": 270, "beam_dmg": 55, "beam_len": 520, "beam_w": 110}
+  },
+  "censer_flail": {
+    "name": "Censer-Flail of Raphael",
+    "style": "censer",
+    "desc": "A swinging brazier on a chain, patterned after the censer Aaron ran between the dead and the living. It reaches further than the sword and asks you to bind rather than break.",
+    "unlocked_by_default": false,
+    "unlock_cost": 120,
+    "light": [
+      {"dmg": 8, "range": 108, "arc": 150, "windup": 0.12, "recover": 0.17, "kb": 90, "stagger": 1.2},
+      {"dmg": 9, "range": 112, "arc": 165, "windup": 0.12, "recover": 0.17, "kb": 100, "stagger": 1.3},
+      {"dmg": 14, "range": 118, "arc": 185, "windup": 0.18, "recover": 0.30, "kb": 200, "stagger": 2.6, "cleanse": 1}
+    ],
+    "heavy": {"dmg": 22, "range": 124, "arc": 250, "windup": 0.30, "recover": 0.48, "kb": 230, "stagger": 3.0, "spin": 1},
+    "dash_slash": {"dmg": 13, "range": 132, "arc": 70, "windup": 0.05, "recover": 0.16, "kb": 250, "stagger": 1.8},
+    "special": {"behavior": "cleanse_zone", "dmg": 6, "radius": 92, "cd": 3.2, "life": 5.0, "dps": 11},
+    "seal": {"dmg": 2, "radius": 116, "duration": 2.8, "cd": 6.6, "arm": 0.35, "cast_range": 250},
+    "ult": {"behavior": "wound_of_world", "dmg": 52, "radius": 300, "corruption_reduce": 25, "stagger": 8.0}
   },
   "aspects": {
     "commission": {
       "name": "Aspect of Commission",
+      "weapon": "flaming_sword",
       "desc": "The sword as it was given: balanced, patient, certain.",
       "cost": 0,
       "mods": {}
     },
     "michael": {
       "name": "Aspect of Michael",
+      "weapon": "flaming_sword",
       "desc": "Strikes land like verdicts. Bonus stagger, bonus damage against the iron-armored, and your Ultimate charges faster.",
       "cost": 80,
       "mods": {"stagger_mult": 0.5, "armored_bonus": 0.3, "ult_charge_mult": 0.3}
     },
     "uriel": {
       "name": "Aspect of Uriel",
+      "weapon": "flaming_sword",
       "desc": "The blade remembers the first fire. Attacks burn, dashes leave a flame trail, and your crescent pierces everything it judges.",
       "cost": 120,
       "mods": {"burn_on_hit": 1, "flame_trail": 1, "special_pierce": 1}
+    },
+    "raphael_aspect": {
+      "name": "Aspect of Raphael",
+      "weapon": "censer_flail",
+      "desc": "The censer as the healer swung it. Your cleanse zones linger far longer, and every enemy you bind knits a little of your own wound shut.",
+      "cost": 0,
+      "mods": {"cleanse_duration": 0.6, "bind_heal": 5}
+    },
+    "mercy": {
+      "name": "Aspect of Mercy",
+      "weapon": "censer_flail",
+      "desc": "Mercy is not weakness; it is patience with teeth. Bound enemies take less damage but pour out far more Revelation when they fall.",
+      "cost": 90,
+      "mods": {"bound_dmg_reduce": 0.3, "bound_rev": 1.0}
+    },
+    "dudael": {
+      "name": "Aspect of Dudael",
+      "weapon": "censer_flail",
+      "desc": "Named for the place Azazel was bound. Your cleanse zones unmake the desert's corruption pools, leaving safe circles of ash.",
+      "cost": 130,
+      "mods": {"convert_pools": 1, "cleanse_duration": 0.3}
     }
   }
 }

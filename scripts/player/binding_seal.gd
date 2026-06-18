@@ -60,8 +60,10 @@ func _capture() -> void:
 				captured += 1
 				e.call("bind_for", duration)
 				e.call("take_hit", pulse_dmg, global_position, 0.0, 0.5, {})
-				if player and RunState.has_mod("seal_heal"):
-					player.call("heal", RunState.mod("seal_heal"))
+				if player:
+					var heal := RunState.mod("seal_heal") + RunState.mod("bind_heal")
+					if heal > 0.0:
+						player.call("heal", heal)
 
 func _draw() -> void:
 	var gold := Color(0.95, 0.85, 0.5)

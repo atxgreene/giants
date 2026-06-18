@@ -104,6 +104,50 @@ func spend_seals(n: int) -> bool:
 func upgrade_level(id: String) -> int:
 	return int(profile["upgrades"].get(id, 0))
 
+# ----------------------------------------------------------------- weapons
+
+const DEFAULT_ASPECT := {"flaming_sword": "commission", "censer_flail": "raphael_aspect"}
+
+func weapon_unlocked(weapon_id: String) -> bool:
+	return weapon_id in profile.get("weapons_unlocked", ["flaming_sword"])
+
+func unlock_weapon(weapon_id: String) -> void:
+	if not weapon_unlocked(weapon_id):
+		profile["weapons_unlocked"].append(weapon_id)
+	# Give the weapon its free starting aspect if it has none recorded.
+	var aspects: Dictionary = profile.get("weapon_aspects", {})
+	if not aspects.has(weapon_id):
+		aspects[weapon_id] = DEFAULT_ASPECT.get(weapon_id, "commission")
+		profile["weapon_aspects"] = aspects
+	# Grant the free aspect so it shows as owned.
+	var free_aspect: String = DEFAULT_ASPECT.get(weapon_id, "")
+	if free_aspect != "" and not (free_aspect in profile["aspects"]):
+		profile["aspects"].append(free_aspect)
+	save()
+
+func current_weapon() -> String:
+	return str(profile.get("weapon", "flaming_sword"))
+
+func current_weapon_aspect() -> String:
+	var aspects: Dictionary = profile.get("weapon_aspects", {})
+	return str(aspects.get(current_weapon(), DEFAULT_ASPECT.get(current_weapon(), "commission")))
+
+func equip_weapon(weapon_id: String) -> void:
+	if not weapon_unlocked(weapon_id):
+		return
+	profile["weapon"] = weapon_id
+	profile["aspect"] = current_weapon_aspect()
+	save()
+	RunState.rebuild_mods()
+
+func equip_aspect(aspect_id: String) -> void:
+	var aspects: Dictionary = profile.get("weapon_aspects", {})
+	aspects[current_weapon()] = aspect_id
+	profile["weapon_aspects"] = aspects
+	profile["aspect"] = aspect_id
+	save()
+	RunState.rebuild_mods()
+
 func toast(text: String, color: Color = Color(0.92, 0.86, 0.7)) -> void:
 	var hud := get_tree().get_first_node_in_group("hud")
 	if hud:
