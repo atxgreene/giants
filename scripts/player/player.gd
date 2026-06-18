@@ -78,6 +78,11 @@ func _ready() -> void:
 		weapon_id = "flaming_sword"
 	weapon = DataDB.weapons[weapon_id]
 	weapon_style = str(weapon.get("style", "sword"))
+	# A warm key-light pool that follows the Witness — the lit-diorama look,
+	# and it works on the web/mobile renderer where screen bloom does not.
+	if bool(Game.setting("bloom")):
+		var lcol := Color(0.6, 0.8, 1.0) if weapon_style == "censer" else Color(1.0, 0.84, 0.55)
+		add_child(FX.make_key_light(lcol, 0.85, 2.7))
 	refresh_stats()
 	if RunState.active and RunState.run_hp > 0.0:
 		hp = minf(RunState.run_hp, max_hp)

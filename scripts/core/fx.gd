@@ -6,9 +6,42 @@ extends Node
 var world: Node2D = null
 var camera = null
 var _hitstop_lock := false
+var _light_tex: GradientTexture2D = null
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+
+## Shared soft radial texture for Light2D pools (cached). Works on every
+## renderer, including the web/mobile GL Compatibility backend where the
+## WorldEnvironment glow is unavailable.
+func light_texture() -> GradientTexture2D:
+	if _light_tex == null:
+		var g := Gradient.new()
+		g.set_color(0, Color(1, 1, 1, 1))
+		g.set_color(1, Color(1, 1, 1, 0))
+		g.add_point(0.55, Color(1, 1, 1, 0.5))
+		var t := GradientTexture2D.new()
+		t.gradient = g
+		t.fill = GradientTexture2D.FILL_RADIAL
+		t.fill_from = Vector2(0.5, 0.5)
+		t.fill_to = Vector2(0.5, 1.0)
+		t.width = 256
+		t.height = 256
+		_light_tex = t
+	return _light_tex
+
+## Make and return an additive warm key-light (a PointLight2D). The caller
+## parents it (e.g. the player) so the lit pool follows. Gated by the Bloom
+## setting so it can be turned off; additive, so it can never darken.
+func make_key_light(color := Color(1.0, 0.86, 0.6), energy := 0.85, scale := 2.6) -> Node:
+	var light := PointLight2D.new()
+	light.texture = light_texture()
+	light.color = color
+	light.energy = energy
+	light.blend_mode = Light2D.BLEND_MODE_ADD
+	light.texture_scale = scale
+	light.z_index = -8
+	return light
 
 func clear_refs() -> void:
 	world = null
@@ -150,8 +183,8 @@ func attach_vignette(parent: Node) -> void:
 	var rect := TextureRect.new()
 	var grad := Gradient.new()
 	grad.set_color(0, Color(0, 0, 0, 0.0))
-	grad.set_color(1, Color(0.02, 0.01, 0.03, 0.42))
-	grad.add_point(0.62, Color(0, 0, 0, 0.0))
+	grad.set_color(1, Color(0.02, 0.01, 0.03, 0.32))
+	grad.add_point(0.66, Color(0, 0, 0, 0.0))
 	var tex := GradientTexture2D.new()
 	tex.gradient = grad
 	tex.fill = GradientTexture2D.FILL_RADIAL
@@ -219,14 +252,15 @@ class Atmosphere extends Control:
 			cool = Color(0.45, 0.3, 0.4)
 		# --- tilt-shift: soft dark focal bands top and bottom (fakes DOF).
 		# Kept light enough that enemies near the edges stay readable. ---
-		var band := vp.y * 0.17
-		_grad_band(Rect2(0, 0, vp.x, band), Color(0.02, 0.02, 0.05, 0.38), Color(0.02, 0.02, 0.05, 0.0), true)
-		_grad_band(Rect2(0, vp.y - band, vp.x, band), Color(0.03, 0.02, 0.04, 0.0), Color(0.03, 0.02, 0.04, 0.42), true)
-		# --- warm/cool vertical grade (lit-diorama feel) ---
+		var band := vp.y * 0.15
+		_grad_band(Rect2(0, 0, vp.x, band), Color(0.02, 0.02, 0.05, 0.26), Color(0.02, 0.02, 0.05, 0.0), true)
+		_grad_band(Rect2(0, vp.y - band, vp.x, band), Color(0.03, 0.02, 0.04, 0.0), Color(0.03, 0.02, 0.04, 0.30), true)
+		# --- warm/cool vertical grade (lit-diorama feel); lean warm so the
+		# scene doesn't read cold/murky on the glow-less web renderer ---
 		var top_tint := cool
-		top_tint.a = 0.10
+		top_tint.a = 0.06
 		var bot_tint := warm
-		bot_tint.a = 0.10
+		bot_tint.a = 0.12
 		_grad_band(Rect2(0, 0, vp.x, vp.y), top_tint, bot_tint, true)
 		# --- drifting light shafts from the Eye (upper centre) ---
 		var src := Vector2(vp.x * 0.5, -vp.y * 0.12)
