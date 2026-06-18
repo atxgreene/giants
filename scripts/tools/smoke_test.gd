@@ -71,6 +71,8 @@ func _test_cross_references() -> void:
 # --------------------------------------------------------------- run director
 
 func _test_run_director() -> void:
+	# Give the bad-luck protector live pools so gate rolls behave as in a run.
+	RunState.pools_available = ["michael", "gabriel", "raphael", "uriel"]
 	for route_id in DataDB.run_routes.get("routes", {}):
 		var d := RunDirector.new()
 		d.generate(12345, route_id)
@@ -97,8 +99,8 @@ func _validate_plan(d: RunDirector, route_id: String) -> void:
 	for i in d.nodes.size() - 1:
 		var opts: Array = d.gate_options(i, false)
 		_check(opts.size() >= 1, "route %s node %d has no exit gate" % [route_id, i])
-	# Guaranteed blessing (first gate) and heal (after miniboss).
-	_check("blessing" in d.gate_options(0, false), "route %s missing guaranteed blessing" % route_id)
+	# Guaranteed blessing (first gate, in the plan) and heal (after miniboss).
+	_check("blessing" in d.gate_plan[0], "route %s missing guaranteed blessing" % route_id)
 	var heal_found := false
 	for i in d.nodes.size():
 		if "heal" in d.gate_plan[i]:
@@ -125,13 +127,18 @@ func _test_save_migration() -> void:
 # --------------------------------------------------------------- live objects
 
 func _test_live_objects() -> void:
-	var world := Node2D.new()
-	add_child(world)
-	# Spawn one of every enemy type to exercise their scripts + combat.
+	# Instantiate one of every enemy type to exercise their setup/_ready, then
+	# free them immediately (without running boss AI over frames).
+	var bench := Node2D.new()
+	add_child(bench)
 	for etype in EnemyBase.SUBCLASS_PATHS:
 		var e = EnemyBase.create(etype)
-		e.position = Vector2(randf() * 200.0, randf() * 200.0)
-		world.add_child(e)
+		bench.add_child(e)
+		bench.remove_child(e)
+		e.free()
+	bench.queue_free()
+	var world := Node2D.new()
+	add_child(world)
 	# Spawn the player and grant it damage against a simple enemy.
 	var player := Player.new()
 	world.add_child(player)
