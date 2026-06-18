@@ -167,6 +167,11 @@ func earn_seals(n: int) -> void:
 	seals_earned += n
 	Game.add_seals(n)
 
+func has_mobility() -> bool:
+	# Does the Witness have any movement/evasion edge? Used to ease boss lane
+	# density for players who skipped mobility rewards.
+	return ("rel_greaves" in relics) or has_mod("near_dodge_slow") or has_mod("flame_trail")
+
 func seed_display() -> String:
 	if director != null:
 		return director.seed_string()

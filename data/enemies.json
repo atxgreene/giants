@@ -5,9 +5,9 @@
     "windup": 0.55, "recover": 0.55, "cd": 1.3, "hit_radius": 14, "seals": 0
   },
   "iron_brute": {
-    "name": "Iron-Taught Brute", "hp": 95, "speed": 72, "dmg": 20, "poise": 80,
+    "name": "Iron-Taught Brute", "hp": 84, "speed": 74, "dmg": 20, "poise": 64,
     "shape": "brute", "color": "#67737f", "attack_range": 100, "armored": true,
-    "windup": 0.85, "recover": 0.85, "cd": 1.9, "hit_radius": 21, "seals": 1
+    "windup": 0.85, "recover": 0.9, "cd": 2.0, "hit_radius": 21, "seals": 1
   },
   "star_archer": {
     "name": "Star-Sick Archer", "hp": 22, "speed": 125, "dmg": 9, "poise": 14,

@@ -252,9 +252,14 @@ func take_hit(amount: float, from_pos: Vector2, kb := 120.0, stagger := 1.0, opt
 		final *= 1.2 + RunState.mod("mark_dmg")
 	if armored and float(opts.get("armored_bonus", 0.0)) > 0.0:
 		final *= 1.0 + float(opts["armored_bonus"])
-	# Aspect of Mercy: the bound are struck more gently, but yield more sight.
-	if bound_t > 0.0 and RunState.mod("bound_dmg_reduce") > 0.0:
-		final *= 1.0 - clampf(RunState.mod("bound_dmg_reduce"), 0.0, 0.9)
+	# Binding's tactical identity: a bound foe is a helpless target and takes
+	# +15% damage by default — valuable even if you never touch Revelation.
+	# The Aspect of Mercy trades that bonus for a penalty in exchange for sight.
+	if bound_t > 0.0:
+		if RunState.mod("bound_dmg_reduce") > 0.0:
+			final *= 1.0 - clampf(RunState.mod("bound_dmg_reduce"), 0.0, 0.9)
+		else:
+			final *= 1.15
 	final *= damage_taken_mult()
 	hp -= final
 	flash_t = 0.12
