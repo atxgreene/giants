@@ -91,7 +91,53 @@ func _open_overlay(menu: Node) -> void:
 
 func _start_run() -> void:
 	AudioMan.play("gate")
-	Game.goto("run")
+	_open_overlay(_build_route_select())
+
+func _build_route_select() -> CanvasLayer:
+	# Route preview at the gate: choose the road into the desert (or let the
+	# seed decide). Shows each route's archetype language.
+	var layer := CanvasLayer.new()
+	layer.layer = 74
+	layer.add_child(UIKit.dim_layer())
+	var root := UIKit.center()
+	layer.add_child(root)
+	var panel := UIKit.panel()
+	var v := UIKit.vbox(10)
+	v.custom_minimum_size = Vector2(680, 0)
+	v.add_child(UIKit.title("CHOOSE THE ROAD INTO THE DESERT", 24))
+	var routes: Dictionary = DataDB.run_routes.get("routes", {})
+	for route_id in routes:
+		var r: Dictionary = routes[route_id]
+		var col := Color(str(r.get("color", "#e8d8a8")))
+		var b := UIKit.button(str(r.get("name", route_id)), 18)
+		b.add_theme_color_override("font_color", col)
+		b.pressed.connect(func():
+			layer.queue_free()
+			Game.goto("run", {"route": route_id}))
+		v.add_child(b)
+		var d := UIKit.label(str(r.get("gate_label", "")), 12, UIKit.ASH.lightened(0.2))
+		d.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		d.custom_minimum_size = Vector2(640, 0)
+		v.add_child(d)
+	v.add_child(UIKit.label(" ", 4))
+	var seeded := UIKit.button("Let the seed decide", 16)
+	seeded.pressed.connect(func():
+		layer.queue_free()
+		Game.goto("run"))
+	v.add_child(seeded)
+	var back := UIKit.button("Step back from the gate", 14)
+	back.pressed.connect(layer.queue_free)
+	v.add_child(back)
+	panel.add_child(v)
+	root.add_child(panel)
+	b_focus(v)
+	return layer
+
+func b_focus(v: Node) -> void:
+	for c in v.get_children():
+		if c is Button:
+			c.grab_focus()
+			return
 
 # --------------------------------------------------------------- dialogue
 
