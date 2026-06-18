@@ -178,18 +178,50 @@ func _chase(delta: float) -> void:
 		velocity = velocity.lerp(to.normalized() * speed, clampf(8.0 * delta, 0.0, 1.0))
 	else:
 		velocity = velocity.move_toward(Vector2.ZERO, 800.0 * delta)
-	# soft separation
+	velocity += _separation()
+	velocity += _obstacle_avoidance(target)
+	move_and_slide()
+	facing = 1.0 if (player.global_position.x - global_position.x) >= 0.0 else -1.0
+	if attack_ready():
+		_start_windup()
+
+func _separation() -> Vector2:
+	# Anti-clumping: push apart from neighbours so packs surround rather than
+	# fuse into one collision blob. Ranged keep a wider personal space.
+	var sep := Vector2.ZERO
+	var personal := 38.0 if float(cfg.get("attack_range", 100.0)) > 250.0 else 32.0
 	for e in get_tree().get_nodes_in_group("enemies"):
 		if e == self or not is_instance_valid(e) or e.get("dead"):
 			continue
 		var d: Vector2 = global_position - e.global_position
 		var dist := d.length()
-		if dist > 0.1 and dist < 34.0:
-			velocity += d.normalized() * (34.0 - dist) * 6.0
-	move_and_slide()
-	facing = 1.0 if (player.global_position.x - global_position.x) >= 0.0 else -1.0
-	if attack_ready():
-		_start_windup()
+		if dist > 0.1 and dist < personal:
+			sep += d.normalized() * (personal - dist) * 7.0
+	return sep.limit_length(speed * 1.2)
+
+func _obstacle_avoidance(target: Vector2) -> Vector2:
+	# Lightweight navigation layer: steer around static props so enemies don't
+	# grind to a halt against a forge or idol on the way to the target.
+	var avoid := Vector2.ZERO
+	var to_target := (target - global_position)
+	for o in get_tree().get_nodes_in_group("obstacles"):
+		if not is_instance_valid(o):
+			continue
+		var orad := float(o.get("obstacle_radius"))
+		if orad <= 0.0:
+			continue
+		var d: Vector2 = global_position - o.global_position
+		var dist := d.length()
+		var threat := orad + hit_radius + 22.0
+		if dist > 0.1 and dist < threat:
+			# Push away, plus a tangential nudge so we slide past rather than
+			# stall head-on when the prop sits between us and the target.
+			var away := d.normalized()
+			var tangent := away.rotated(PI * 0.5)
+			if tangent.dot(to_target) < 0.0:
+				tangent = -tangent
+			avoid += away * (threat - dist) * 8.0 + tangent * (threat - dist) * 4.0
+	return avoid.limit_length(speed * 1.5)
 
 func _start_windup() -> void:
 	pick_attack()

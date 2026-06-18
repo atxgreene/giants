@@ -3,6 +3,7 @@ class_name WatcherHound
 ## Fast pack beast. Circles the player, lunges, and leaves corruption pools.
 
 var orbit_sign := 1.0
+var orbit_phase := 0.0
 var lunge_dir := Vector2.RIGHT
 var lunge_t := 0.0
 var lunge_hit := false
@@ -10,12 +11,15 @@ var lunge_hit := false
 func _ready() -> void:
 	super()
 	orbit_sign = 1.0 if randf() < 0.5 else -1.0
+	# A per-hound angular slot so the pack rings the player instead of stacking.
+	orbit_phase = randf_range(0.5, 1.4)
 
 func desired_position() -> Vector2:
 	var to_self := global_position - player.global_position
 	var d := maxf(to_self.length(), 1.0)
-	var tangent := to_self.normalized().rotated(PI * 0.5 * orbit_sign)
-	var ideal := player.global_position + to_self.normalized() * 150.0 + tangent * 120.0
+	# Orbit toward a slot offset around the player; packs spread into a ring.
+	var slot := to_self.normalized().rotated(orbit_sign * orbit_phase)
+	var ideal := player.global_position + slot * 165.0
 	if d > 260.0:
 		return player.global_position
 	return ideal

@@ -563,6 +563,8 @@ class PropNode extends Node2D:
 	var kind := "bones"
 	var seed_v := 0.0
 
+	var obstacle_radius := 0.0
+
 	func _ready() -> void:
 		seed_v = randf() * 10.0
 		if kind == "crack":
@@ -577,6 +579,10 @@ class PropNode extends Node2D:
 			cs.shape = sh
 			body.add_child(cs)
 			add_child(body)
+			# Make it known to the enemy navigation layer so AI steers around it
+			# instead of grinding against the collider.
+			obstacle_radius = 30.0 if kind == "forge" else 24.0
+			add_to_group("obstacles")
 		queue_redraw()
 
 	const SHADOW_R := {"bones": 22.0, "idol": 15.0, "forge": 27.0, "rack": 21.0,
