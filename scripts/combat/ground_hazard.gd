@@ -64,6 +64,7 @@ func _process(delta: float) -> void:
 				phase = "active"
 				if not friendly:
 					AudioMan.play("fire")
+					FX.flash_light(global_position, color.lightened(0.2), 1.4, 1.6, 0.25)
 		"active":
 			active_t -= delta
 			tick -= delta
@@ -72,10 +73,22 @@ func _process(delta: float) -> void:
 				_apply_tick()
 			if active_t <= 0.0:
 				phase = "fade"
+				_leave_decal()
 		"fade":
 			modulate.a -= delta * 3.0
 			if modulate.a <= 0.0:
 				queue_free()
+
+func _leave_decal() -> void:
+	# What the fire leaves on the ground: ash from cleanse, a corruption stain
+	# from defiled pools, scorch from forge-fire.
+	var dk := "ash" if cleanse else ("corruption" if corrupting else "scorch")
+	if kind == "lane":
+		var dir := Vector2.RIGHT.rotated(angle)
+		for i in 3:
+			FX.decal(global_position + dir * (float(i - 1) * length * 0.28), dk, width * 0.55)
+	else:
+		FX.decal(global_position, dk, radius * 0.9)
 
 func _contains(point: Vector2) -> bool:
 	if kind != "lane":

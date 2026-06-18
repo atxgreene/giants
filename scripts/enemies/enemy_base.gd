@@ -350,6 +350,8 @@ func die() -> void:
 	AudioMan.play("edeath")
 	FX.burst(global_position, body_color, 18, 200.0, 0.55)
 	FX.burst(global_position, Color(0.95, 0.85, 0.5), 8, 120.0, 0.4)
+	FX.flash_light(global_position, body_color.lightened(0.35), 1.3 if elite else 0.9, 1.4 if elite else 0.9, 0.22)
+	FX.decal(global_position, "ember_scorch" if burn_t > 0.0 else "scorch", maxf(hit_radius * 1.3, 22.0))
 	died.emit(self)
 	var tw := create_tween()
 	tw.tween_property(self, "modulate:a", 0.0, 0.4)

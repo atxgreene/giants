@@ -364,6 +364,8 @@ func _strike() -> void:
 			key = "charged" if charge_t > 0.12 else "heavy"
 		FX.hitstop(float(HITSTOP.get(key, 0.045)))
 		FX.shake((0.5 if charge_t > 0.12 else 0.35) if atk_is_heavy else 0.2)
+		var impact := global_position + atk_dir * reach * 0.55
+		FX.flash_light(impact, col.lightened(0.2), 1.4 if atk_is_heavy else 0.9, 0.7 if atk_is_heavy else 0.5, 0.16)
 	if not atk_is_heavy and post_dash_t <= 0.0:
 		combo_idx = (combo_idx + 1) % 3
 		combo_t = 0.95
@@ -410,6 +412,7 @@ func _try_special() -> void:
 	if RunState.has_mod("extra_projectile"):
 		_fire_crescent(aim_dir.rotated(0.22))
 	AudioMan.play("fire")
+	FX.flash_light(global_position + aim_dir * 28.0, Color(1.0, 0.8, 0.4), 1.1, 0.7, 0.14)
 	FX.shake(0.12)
 
 func _place_cleanse_zone(pos: Vector2) -> void:
@@ -488,6 +491,8 @@ func _try_ultimate() -> void:
 	FX.ring(global_position, Color(0.6, 0.8, 1.0), 20.0, radius * 0.7, 0.4)
 	FX.slash(global_position, aim_dir, beam_len * 0.8, 18.0, Color(1.0, 0.95, 0.7))
 	FX.flash_screen(Color(1.0, 0.95, 0.8, 0.3), 0.3)
+	FX.flash_light(global_position, Color(1.0, 0.92, 0.6), 3.5, 3.6, 0.5)
+	FX.decal(global_position, "ember_scorch", 120.0)
 	FX.hitstop(0.1, 0.04)
 	FX.shake(0.8)
 
@@ -521,6 +526,8 @@ func _ult_wound_of_world() -> void:
 	FX.ring(global_position, Color(0.6, 0.9, 1.0), 40.0, radius, 0.55)
 	FX.ring(global_position, Color(0.9, 0.98, 1.0), 20.0, radius * 0.7, 0.4)
 	FX.flash_screen(Color(0.7, 0.9, 1.0, 0.28), 0.3)
+	FX.flash_light(global_position, Color(0.7, 0.92, 1.0), 3.2, 3.8, 0.5)
+	FX.decal(global_position, "ash", 130.0)
 	FX.hitstop(0.1, 0.04)
 	FX.shake(0.7)
 
@@ -577,6 +584,7 @@ func take_hit(dmg: float, from_pos: Vector2) -> void:
 	AudioMan.play("hurt")
 	FX.shake(0.4)
 	FX.burst(global_position, Color(0.85, 0.2, 0.2), 10, 150.0, 0.4)
+	FX.flash_light(global_position, Color(1.0, 0.25, 0.2), 1.6, 1.2, 0.22)
 	FX.hitstop(0.05, 0.1)
 	hp_changed.emit()
 	if hp <= 0.0:

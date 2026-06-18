@@ -70,6 +70,12 @@ protects build quality instead of just producing builds.
     braziers light each arena; the hub seal glows steadily and the boss arena
     has a restless forge-glow. Floor tiles gained a subtle bevel (lit upper /
     shadowed lower edges) so the ground reads with height instead of flat.
+  - **Dynamic impact lighting**: transient additive light flashes on weapon
+    hits, the crescent, the hurt-red, hazard ignition, enemy deaths, and a big
+    flash on both ultimates (soft-capped for web performance).
+  - **Combat-reactive ground**: the fight leaves marks — scorch from
+    forge-fire and kills, ash rings from cleanse zones and Wound of the World,
+    corruption stains from defiled pools. Marks are capped and fade slowly.
 
 ### Added — Durability & accessibility
 - Save versioning (`save_version`, migration table, pre-migration backup,

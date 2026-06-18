@@ -273,7 +273,96 @@ func flash_screen(color := Color(1, 1, 1, 0.35), dur := 0.25) -> void:
 	tw.tween_property(rect, "color:a", 0.0, dur)
 	tw.tween_callback(layer.queue_free)
 
+## A transient additive light flash at a world point — impact pops, the
+## ultimate, explosions, the hurt-red. Fades out and frees itself. Gated by the
+## Bloom setting; additive, so it can never darken.
+func flash_light(pos: Vector2, color: Color, energy := 1.6, scale := 1.4, dur := 0.18) -> void:
+	if not bool(Game.setting("bloom")):
+		return
+	var t := _target()
+	if t == null:
+		return
+	# Soft cap so a chaotic fight can't spawn unbounded lights on the web renderer.
+	if get_tree().get_nodes_in_group("fxlight").size() > 22:
+		return
+	var l := PointLight2D.new()
+	l.add_to_group("fxlight")
+	l.texture = light_texture()
+	l.color = color
+	l.energy = energy
+	l.blend_mode = Light2D.BLEND_MODE_ADD
+	l.texture_scale = scale
+	l.position = pos
+	l.z_index = -7
+	t.add_child(l)
+	var tw := l.create_tween()
+	tw.tween_property(l, "energy", 0.0, dur)
+	tw.tween_callback(l.queue_free)
+
+## A persistent ground mark the fight leaves behind: scorch, ash ring, or
+## corruption stain. Capped and fades slowly, so the floor remembers combat
+## without unbounded buildup.
+func decal(pos: Vector2, kind := "scorch", radius := 30.0) -> void:
+	var t := _target()
+	if t == null:
+		return
+	var existing := get_tree().get_nodes_in_group("decals")
+	if existing.size() > 48:
+		existing[0].queue_free()
+	var d := Decal.new()
+	d.kind = kind
+	d.radius = radius
+	d.position = pos
+	t.add_child(d)
+
 # ------------------------------------------------------------- inner classes
+
+class Decal extends Node2D:
+	## Procedural ground mark left by combat. Drawn once; only its alpha fades
+	## (cheap — no per-frame redraw), then it frees itself.
+	var kind := "scorch"
+	var radius := 30.0
+	var life := 16.0
+	var seed_v := 0.0
+
+	func _ready() -> void:
+		add_to_group("decals")
+		z_index = -15
+		seed_v = randf() * 10.0
+		rotation = randf() * TAU
+		queue_redraw()
+
+	func _process(delta: float) -> void:
+		life -= delta
+		modulate.a = clampf(life / 3.0, 0.0, 1.0)
+		if life <= 0.0:
+			queue_free()
+
+	func _h(i: int) -> float:
+		return absf(fmod(sin((float(i) + seed_v) * 41.71) * 4137.13, 1.0))
+
+	func _draw() -> void:
+		match kind:
+			"ash":
+				draw_circle(Vector2.ZERO, radius, Color(0.5, 0.47, 0.43, 0.16))
+				draw_arc(Vector2.ZERO, radius * 0.92, 0, TAU, 28, Color(0.75, 0.72, 0.66, 0.32), 2.0)
+				for i in 10:
+					var a := TAU * _h(i)
+					draw_circle(Vector2.from_angle(a) * radius * (0.4 + 0.5 * _h(i + 30)), 1.6 + _h(i + 7) * 2.0, Color(0.6, 0.57, 0.52, 0.3))
+			"corruption":
+				for i in 7:
+					var off := Vector2((_h(i) - 0.5) * radius, (_h(i + 11) - 0.5) * radius)
+					draw_circle(off, radius * (0.4 + 0.4 * _h(i + 3)), Color(0.28, 0.45, 0.22, 0.18))
+				draw_circle(Vector2.ZERO, radius * 0.5, Color(0.2, 0.4, 0.18, 0.22))
+			_: # scorch / ember_scorch
+				for i in 8:
+					var o := Vector2((_h(i) - 0.5) * radius * 1.3, (_h(i + 13) - 0.5) * radius * 1.3)
+					draw_circle(o, radius * (0.35 + 0.4 * _h(i + 5)), Color(0.04, 0.025, 0.03, 0.30))
+				draw_circle(Vector2.ZERO, radius * 0.55, Color(0.02, 0.015, 0.02, 0.34))
+				if kind == "ember_scorch":
+					for i in 6:
+						var ep := Vector2((_h(i + 1) - 0.5) * radius, (_h(i + 9) - 0.5) * radius)
+						draw_circle(ep, 1.2 + _h(i) * 1.4, Color(1.0, 0.5, 0.15, 0.5))
 
 class FlickerLight extends PointLight2D:
 	## Additive light that breathes like firelight. Steady (do_flicker=false)
