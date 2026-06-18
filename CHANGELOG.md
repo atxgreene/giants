@@ -5,6 +5,69 @@ Format follows [Keep a Changelog](https://keepachangelog.com/); versioning
 follows [Semantic Versioning](https://semver.org/) (`0.x` = pre-release:
 minor = feature drop, patch = fixes/balance).
 
+## [0.4.0] — 2026-06-18 — "The Forking Path"
+
+Phase 2.5 — game feel, replayability, and production foundation. The run is
+no longer a fixed corridor, the Witness has a second weapon, and CI now
+protects build quality instead of just producing builds.
+
+### Added — Run Director v1
+- Data-driven, seeded run graph (`data/run_routes.json`,
+  `scripts/rooms/run_director.gd`). The old fixed sequence is now just the
+  "Pilgrim Road" fallback route.
+- Route archetypes: **Judgment** (combat/elite heavy, Michael/Gabriel-biased),
+  **Mercy** (shrines, healing, Raphael-biased), **Temptation** (forbidden
+  gates, corrupted rooms, enemies that grow stronger late).
+- Weighted room rarity, no-repeat rules, boss/miniboss locks, route-preview
+  language at the desert gate, and guaranteed content every run (a blessing,
+  a heal, a codex/vision room, a miniboss, a boss).
+- Corrupted room variants once Corruption ≥ 50; hidden Revelation chambers
+  once Revelation ≥ 80; bad-luck protection so exhausted reward pools are
+  swapped out.
+- Deterministic seeds: the same seed reproduces route order and reward rolls.
+  Seed + route are shown in the pause menu and the victory / game-over
+  summaries.
+
+### Added — Second weapon: Censer-Flail of Raphael
+- A mid-range sweeping chain weapon with lower burst, better crowd control,
+  cleanse zones, and a binding-focused identity. Strong against corruption
+  pools and hounds, weak against armored brutes until upgraded.
+- Cleanse-zone special, overhead cleanse pulse, and the **Wound of the
+  World** ultimate (radial cleanse, stagger, corruption scrub, Revelation
+  for bound foes).
+- Three aspects: **Raphael** (lasting cleanse, binding heals), **Mercy**
+  (bound foes take less damage but grant more Revelation), **Dudael**
+  (corruption pools convert to safe ash).
+- Weapon choice moved out of `Player._ready` into `Game.profile["weapon"]`
+  with per-weapon equipped aspects, unlock state, save support, and altar
+  selection UI.
+
+### Added — Content
+- New elite: the **Hound-Mother** and the Kennels of Azazel room.
+- Three corrupted room variants, three hidden Revelation events, a new
+  Scribe of Dust dialogue branch, Michael's rebuke (after three forbidden
+  gifts) and Raphael's commendation (a clean victory), and seven new codex
+  entries — all source-tiered.
+- Victory screen now shows a full run summary: route, seed, corruption,
+  revelation, bound kills, forbidden gifts accepted/refused, weapon/aspect,
+  and codex pages unlocked.
+
+### Added — Durability & accessibility
+- Save versioning (`save_version`, migration table, pre-migration backup,
+  field repair). Old saves load; a corrupt save fails visibly instead of
+  silently wiping progress.
+- New accessibility settings: screen-shake amount, flash intensity, text
+  scale, high-contrast / colorblind-safe telegraphs, and a pause-menu
+  control map.
+
+### Changed — CI
+- `godot --headless --import` no longer ends in `|| true`; parse/compile
+  errors fail the build.
+- New `ci` workflow: headless smoke test (data integrity, run-graph
+  no-softlock + determinism, save migration, live enemy/player
+  instantiation), web-export boot check, and a version/changelog/README
+  consistency check.
+
 ## [0.3.1] — 2026-06-10 — "The Vision"
 
 ### Art
