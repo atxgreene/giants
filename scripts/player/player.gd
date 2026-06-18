@@ -14,6 +14,8 @@ const DASH_TIME := 0.16
 const BASE_DASH_CD := 0.95
 
 var weapon: Dictionary = {}
+var weapon_style := "sword"
+var sprite: CharSprite = null    # production art, if a sheet exists; else procedural
 var max_hp := 100.0
 var hp := 100.0
 var dead := false
@@ -42,6 +44,17 @@ var combo_idx := 0
 var combo_t := 0.0
 var queued := ""
 
+# --- combat feel: input buffering, cancel windows, heavy charge -------------
+const BUFFER_T := 0.16            # how long an input is remembered
+const HEAVY_CHARGE_MAX := 0.7     # max heavy hold time
+# Hit-pause (hit-stop) by attack type — tuned so heavy/charged feel weightier.
+const HITSTOP := {"light": 0.045, "dash": 0.05, "heavy": 0.08, "charged": 0.12, "ult": 0.10}
+var input_buf: Dictionary = {}    # action -> remaining buffer time
+var charge_t := 0.0               # current heavy-charge time
+var charge_mult := 1.0            # damage/size multiplier from charging
+var debug_overlay := false        # F3 toggles the combat debug overlay
+var last_hit_dir := Vector2.RIGHT # for enemy/near-miss directional feedback
+
 var special_cd_t := 0.0
 var seal_cd_t := 0.0
 var ult_charge := 0.0
@@ -61,7 +74,22 @@ func _ready() -> void:
 	sh.radius = 11.0
 	cs.shape = sh
 	add_child(cs)
-	weapon = DataDB.weapons["flaming_sword"]
+	var weapon_id := str(Game.profile.get("weapon", "flaming_sword"))
+	if not DataDB.weapons.has(weapon_id):
+		weapon_id = "flaming_sword"
+	weapon = DataDB.weapons[weapon_id]
+	weapon_style = str(weapon.get("style", "sword"))
+	# A warm key-light pool that follows the Witness — the lit-diorama look,
+	# and it works on the web/mobile renderer where screen bloom does not.
+	if bool(Game.setting("bloom")):
+		var lcol := Color(0.6, 0.8, 1.0) if weapon_style == "censer" else Color(1.0, 0.84, 0.55)
+		add_child(FX.make_key_light(lcol, 0.85, 2.7))
+	# Production art path: render from a sprite sheet if one exists, else fall
+	# back to the procedural Witness in _draw().
+	sprite = CharSprite.try_make("witness")
+	if sprite != null:
+		sprite.z_index = 1
+		add_child(sprite)
 	refresh_stats()
 	if RunState.active and RunState.run_hp > 0.0:
 		hp = minf(RunState.run_hp, max_hp)
@@ -74,7 +102,22 @@ func refresh_stats() -> void:
 	hp = minf(hp, max_hp)
 	hp_changed.emit()
 
+func _update_sprite() -> void:
+	sprite.flip_h = facing < 0.0
+	var st := "idle"
+	if state == "attack":
+		st = "windup" if atk_phase == "windup" else ("charge" if atk_phase == "charge" else "attack")
+	elif dashing:
+		st = "dash"
+	elif hurt_flash > 0.18:
+		st = "hurt"
+	elif velocity.length() > 20.0:
+		st = "walk"
+	sprite.play(st)
+
 func _input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F3:
+		debug_overlay = not debug_overlay
 	if event is InputEventJoypadButton or event is InputEventJoypadMotion:
 		using_controller = true
 	elif event is InputEventMouseMotion or event is InputEventMouseButton:
@@ -95,9 +138,14 @@ func _physics_process(delta: float) -> void:
 	_update_aim()
 	if not input_locked:
 		_read_combat_input()
+	_tick_buffer(delta)
 	_update_attack(delta)
+	if not input_locked:
+		_service_buffer()
 	_update_movement(delta)
 	move_and_slide()
+	if sprite != null:
+		_update_sprite()
 	if dashing:
 		ghost_tick -= delta
 		if ghost_tick <= 0.0:
@@ -143,6 +191,11 @@ func _tick_timers(delta: float) -> void:
 func _update_aim() -> void:
 	if Game.touch_mode:
 		# Touch: auto-aim the nearest living enemy; fall back to move direction.
+		if not bool(Game.setting("auto_aim_assist")):
+			if move_dir.length() > 0.1:
+				aim_dir = move_dir.normalized()
+			facing = 1.0 if aim_dir.x >= 0.0 else -1.0
+			return
 		var best: Node2D = null
 		var best_d := 560.0
 		for e in get_tree().get_nodes_in_group("enemies"):
@@ -169,20 +222,56 @@ func _update_aim() -> void:
 	facing = 1.0 if aim_dir.x >= 0.0 else -1.0
 
 func _read_combat_input() -> void:
-	if Input.is_action_just_pressed("attack"):
-		_try_attack("light")
-	elif Input.is_action_just_pressed("attack_heavy"):
-		_try_attack("heavy")
-	if Input.is_action_just_pressed("dash"):
-		_try_dash()
-	if Input.is_action_just_pressed("special"):
-		_try_special()
-	if Input.is_action_just_pressed("seal"):
-		_try_seal()
-	if Input.is_action_just_pressed("ultimate"):
-		_try_ultimate()
+	# Buffer every combat input; _service_buffer() decides when each one fires,
+	# so presses during recovery/animation are not eaten.
+	for a in ["attack", "attack_heavy", "dash", "special", "seal", "ultimate"]:
+		if Input.is_action_just_pressed(a):
+			input_buf[a] = BUFFER_T
+	if Game.setting("hold_to_dash") and Input.is_action_pressed("dash"):
+		input_buf["dash"] = maxf(float(input_buf.get("dash", 0.0)), 0.05)
 	if Input.is_action_just_pressed("interact"):
 		_try_interact()
+
+func _tick_buffer(delta: float) -> void:
+	for a in input_buf.keys():
+		input_buf[a] = float(input_buf[a]) - delta
+		if float(input_buf[a]) <= 0.0:
+			input_buf.erase(a)
+
+func _can_cancel() -> bool:
+	# Free, or in attack recovery (the cancel window into dash/special/seal/ult).
+	return state == "free" or (state == "attack" and atk_phase == "recover")
+
+func _cancel_to_free() -> void:
+	if state == "attack" and atk_phase == "recover":
+		state = "free"
+		charge_mult = 1.0
+
+func _service_buffer() -> void:
+	# Priority: dash (defensive) > ultimate > special > seal > attacks.
+	if input_buf.has("dash") and not dashing and dash_cd_t <= 0.0 and _can_cancel():
+		_cancel_to_free()
+		input_buf.erase("dash")
+		_try_dash()
+	if input_buf.has("ultimate") and _can_cancel() and ult_charge >= 100.0:
+		_cancel_to_free()
+		input_buf.erase("ultimate")
+		_try_ultimate()
+	if input_buf.has("special") and special_cd_t <= 0.0 and _can_cancel():
+		_cancel_to_free()
+		input_buf.erase("special")
+		_try_special()
+	if input_buf.has("seal") and seal_cd_t <= 0.0 and _can_cancel():
+		_cancel_to_free()
+		input_buf.erase("seal")
+		_try_seal()
+	if state == "free":
+		if input_buf.has("attack"):
+			input_buf.erase("attack")
+			_start_attack("light")
+		elif input_buf.has("attack_heavy"):
+			input_buf.erase("attack_heavy")
+			_start_attack("heavy")
 
 func _try_interact() -> void:
 	var best = null
@@ -214,16 +303,11 @@ func _update_movement(delta: float) -> void:
 
 # ------------------------------------------------------------------ attacks
 
-func _try_attack(kind: String) -> void:
-	if state == "attack":
-		if atk_phase == "recover":
-			queued = kind
-		return
-	_start_attack(kind)
-
 func _start_attack(kind: String) -> void:
 	var move: Dictionary
 	atk_is_heavy = kind == "heavy"
+	charge_mult = 1.0
+	charge_t = 0.0
 	if atk_is_heavy:
 		move = weapon["heavy"]
 	elif post_dash_t > 0.0:
@@ -240,27 +324,43 @@ func _start_attack(kind: String) -> void:
 func _update_attack(delta: float) -> void:
 	if state != "attack":
 		return
+	# Heavy hold/release: after windup, keep charging while the button is held.
+	if atk_phase == "charge":
+		charge_t += delta
+		atk_dir = aim_dir
+		swing_vis = maxf(swing_vis, 0.6)
+		var max_reached := charge_t >= HEAVY_CHARGE_MAX
+		if not Input.is_action_pressed("attack_heavy") or max_reached or input_locked:
+			charge_mult = lerpf(1.0, 1.6, clampf(charge_t / HEAVY_CHARGE_MAX, 0.0, 1.0))
+			_strike()
+			atk_phase = "recover"
+			atk_t = float(atk["recover"])
+		return
 	atk_t -= delta
 	if atk_t > 0.0:
 		return
 	if atk_phase == "windup":
+		# A held heavy enters the charge/spin state instead of striking now.
+		if atk_is_heavy and Input.is_action_pressed("attack_heavy") and not input_locked:
+			atk_phase = "charge"
+			charge_t = 0.0
+			if weapon_style == "censer":
+				AudioMan.play("fire")
+			return
 		_strike()
 		atk_phase = "recover"
 		atk_t = float(atk["recover"])
 	else:
 		state = "free"
-		if queued != "":
-			var q := queued
-			queued = ""
-			_start_attack(q)
 
 func _strike() -> void:
 	swing_vis = 1.0
-	var reach := float(atk["range"])
-	var arc := float(atk["arc"])
-	var dmg := calc_damage(float(atk["dmg"]))
+	var reach := float(atk["range"]) * (1.0 + (charge_mult - 1.0) * 0.4)
+	var arc := float(atk["arc"]) * (1.0 + (charge_mult - 1.0) * 0.3)
+	var dmg := calc_damage(float(atk["dmg"]) * charge_mult)
 	var opts := hit_opts(atk)
-	var stagger := float(atk["stagger"]) * (1.0 + RunState.mod("stagger_mult"))
+	var stagger := float(atk["stagger"]) * charge_mult * (1.0 + RunState.mod("stagger_mult"))
+	last_hit_dir = atk_dir
 	var hits := 0
 	for e in get_tree().get_nodes_in_group("enemies"):
 		if not is_instance_valid(e) or e.get("dead"):
@@ -273,16 +373,34 @@ func _strike() -> void:
 				on_dealt(dmg, e)
 				hits += 1
 	var col := Color(1.0, 0.72, 0.3) if not atk_is_heavy else Color(1.0, 0.5, 0.15)
+	if weapon_style == "censer":
+		col = Color(0.7, 0.88, 0.7) if not atk_is_heavy else Color(0.6, 0.85, 0.95)
 	FX.slash(global_position, atk_dir, reach, arc, col)
+	if int(atk.get("cleanse", 0)) > 0:
+		# Censer overhead slam: a short cleanse pulse where it lands.
+		_place_cleanse_pulse(global_position + atk_dir * reach * 0.5)
 	if hits > 0:
 		AudioMan.play("hit_heavy" if atk_is_heavy else "hit")
-		FX.hitstop(0.07 if atk_is_heavy else 0.045)
-		FX.shake(0.35 if atk_is_heavy else 0.2)
+		var key := "light"
+		if atk_is_heavy:
+			key = "charged" if charge_t > 0.12 else "heavy"
+		FX.hitstop(float(HITSTOP.get(key, 0.045)))
+		FX.shake((0.5 if charge_t > 0.12 else 0.35) if atk_is_heavy else 0.2)
+		var impact := global_position + atk_dir * reach * 0.55
+		FX.flash_light(impact, col.lightened(0.2), 1.4 if atk_is_heavy else 0.9, 0.7 if atk_is_heavy else 0.5, 0.16)
 	if not atk_is_heavy and post_dash_t <= 0.0:
 		combo_idx = (combo_idx + 1) % 3
 		combo_t = 0.95
 	else:
 		combo_idx = 0
+
+func _place_cleanse_pulse(pos: Vector2) -> void:
+	GroundHazard.spawn(get_parent(), pos, {
+		"kind": "cleanse", "radius": 70.0, "active": 1.2,
+		"dps": 12.0 * (1.0 + RunState.mod("dmg_mult")), "friendly": true,
+		"cleanse": true, "convert_pools": RunState.has_mod("convert_pools"),
+		"color": Color(0.6, 0.9, 0.95)})
+	FX.ring(pos, Color(0.7, 0.95, 1.0), 14.0, 70.0, 0.3)
 
 func _try_dash() -> void:
 	if dashing or dash_cd_t > 0.0:
@@ -307,11 +425,33 @@ func _try_special() -> void:
 	if special_cd_t > 0.0 or state == "attack":
 		return
 	special_cd_t = float(weapon["special"]["cd"])
+	if str(weapon["special"].get("behavior", "crescent")) == "cleanse_zone":
+		_place_cleanse_zone(global_position + aim_dir * 70.0)
+		AudioMan.play("seal")
+		FX.shake(0.1)
+		return
 	_fire_crescent(aim_dir)
 	if RunState.has_mod("extra_projectile"):
 		_fire_crescent(aim_dir.rotated(0.22))
 	AudioMan.play("fire")
+	FX.flash_light(global_position + aim_dir * 28.0, Color(1.0, 0.8, 0.4), 1.1, 0.7, 0.14)
 	FX.shake(0.12)
+
+func _place_cleanse_zone(pos: Vector2) -> void:
+	## Raphael's Censer: a lingering circle that burns the corrupt, soothes the
+	## Witness's corruption, and (with Dudael) converts enemy pools to safe ash.
+	var sp: Dictionary = weapon["special"]
+	var life := float(sp.get("life", 5.0)) * (1.0 + RunState.mod("cleanse_duration"))
+	GroundHazard.spawn(get_parent(), pos, {
+		"kind": "cleanse",
+		"radius": float(sp.get("radius", 92.0)),
+		"active": life,
+		"dps": float(sp.get("dps", 11.0)) * (1.0 + RunState.mod("dmg_mult")),
+		"friendly": true,
+		"cleanse": true,
+		"convert_pools": RunState.has_mod("convert_pools"),
+		"color": Color(0.55, 0.85, 0.95)})
+	FX.ring(pos, Color(0.6, 0.9, 1.0), 20.0, float(sp.get("radius", 92.0)), 0.4)
 
 func _fire_crescent(dir: Vector2) -> void:
 	var sp: Dictionary = weapon["special"]
@@ -344,6 +484,9 @@ func _try_ultimate() -> void:
 		AudioMan.play("ui")
 		return
 	ult_charge = 0.0
+	if str(weapon["ult"].get("behavior", "verdict")) == "wound_of_world":
+		_ult_wound_of_world()
+		return
 	var cfg: Dictionary = weapon["ult"]
 	var dmg := calc_damage(float(cfg["dmg"]) * (1.0 + RunState.mod("ult_dmg")))
 	var beam_dmg := calc_damage(float(cfg["beam_dmg"]) * (1.0 + RunState.mod("ult_dmg")))
@@ -370,8 +513,45 @@ func _try_ultimate() -> void:
 	FX.ring(global_position, Color(0.6, 0.8, 1.0), 20.0, radius * 0.7, 0.4)
 	FX.slash(global_position, aim_dir, beam_len * 0.8, 18.0, Color(1.0, 0.95, 0.7))
 	FX.flash_screen(Color(1.0, 0.95, 0.8, 0.3), 0.3)
+	FX.flash_light(global_position, Color(1.0, 0.92, 0.6), 3.5, 3.6, 0.5)
+	FX.decal(global_position, "ember_scorch", 120.0)
 	FX.hitstop(0.1, 0.04)
 	FX.shake(0.8)
+
+func _ult_wound_of_world() -> void:
+	## Wound of the World: a radial cleanse that staggers every enemy, scrubs the
+	## Witness's own corruption, and pours Revelation for each foe held bound.
+	var cfg: Dictionary = weapon["ult"]
+	var radius := float(cfg.get("radius", 300.0))
+	var dmg := calc_damage(float(cfg.get("dmg", 52.0)) * (1.0 + RunState.mod("ult_dmg")))
+	var stagger := float(cfg.get("stagger", 8.0)) * (1.0 + RunState.mod("stagger_mult"))
+	var opts := hit_opts({})
+	var bound_caught := 0
+	for e in get_tree().get_nodes_in_group("enemies"):
+		if not is_instance_valid(e) or e.get("dead"):
+			continue
+		if global_position.distance_to(e.global_position) <= radius + float(e.get("hit_radius")):
+			if float(e.get("bound_t")) > 0.0:
+				bound_caught += 1
+			e.call("take_hit", dmg, global_position, 220.0, stagger, opts)
+			on_dealt(dmg, e)
+	# Scrub corruption, and turn enemy pools to ash across the arena.
+	RunState.add_corruption(-float(cfg.get("corruption_reduce", 25.0)))
+	_place_cleanse_zone(global_position)
+	for h in get_tree().get_nodes_in_group("hazards"):
+		if is_instance_valid(h) and h.has_method("neutralize") and global_position.distance_to(h.global_position) <= radius:
+			h.call("neutralize")
+	if bound_caught > 0:
+		RunState.add_revelation(6.0 * float(bound_caught))
+		Game.toast("The bound are unmade in mercy. Revelation pours in.", Color(0.45, 0.85, 1.0))
+	AudioMan.play("ult")
+	FX.ring(global_position, Color(0.6, 0.9, 1.0), 40.0, radius, 0.55)
+	FX.ring(global_position, Color(0.9, 0.98, 1.0), 20.0, radius * 0.7, 0.4)
+	FX.flash_screen(Color(0.7, 0.9, 1.0, 0.28), 0.3)
+	FX.flash_light(global_position, Color(0.7, 0.92, 1.0), 3.2, 3.8, 0.5)
+	FX.decal(global_position, "ash", 130.0)
+	FX.hitstop(0.1, 0.04)
+	FX.shake(0.7)
 
 # ------------------------------------------------------------------ damage
 
@@ -402,20 +582,31 @@ func take_hit(dmg: float, from_pos: Vector2) -> void:
 	if dead:
 		return
 	if iframes > 0.0 or dashing:
-		if RunState.has_mod("near_dodge_slow") and slowmo_cd_t <= 0.0 and dashing:
-			slowmo_cd_t = 6.0
-			FX.slowmo(0.35, 0.55)
+		# Near-miss: an attack that would have landed during a dodge. Always give
+		# a little feedback; the Uriel mod adds a stronger time-dilation.
+		if dashing:
+			last_hit_dir = (from_pos - global_position).normalized()
+			FX.burst(global_position, Color(0.7, 0.9, 1.0), 5, 90.0, 0.25)
+			if RunState.has_mod("near_dodge_slow") and slowmo_cd_t <= 0.0:
+				slowmo_cd_t = 6.0
+				FX.slowmo(0.35, 0.55)
+			elif slowmo_cd_t <= 0.0:
+				slowmo_cd_t = 1.2
+				FX.hitstop(0.04, 0.25)
 		return
 	if RunState.active and RunState.corruption >= 50.0:
 		dmg *= 1.15
 	hp -= dmg
 	RunState.took_damage_this_room = true
-	iframes = 0.55
+	# Hurt grace: a longer mercy window when a hit drops you into the red, so
+	# chip damage can't instantly chain into death.
+	iframes = 0.75 if hp < max_hp * 0.25 else 0.55
 	hurt_flash = 0.25
 	velocity += (global_position - from_pos).normalized() * 180.0
 	AudioMan.play("hurt")
 	FX.shake(0.4)
 	FX.burst(global_position, Color(0.85, 0.2, 0.2), 10, 150.0, 0.4)
+	FX.flash_light(global_position, Color(1.0, 0.25, 0.2), 1.6, 1.2, 0.22)
 	FX.hitstop(0.05, 0.1)
 	hp_changed.emit()
 	if hp <= 0.0:
@@ -445,6 +636,8 @@ func _die() -> void:
 	dead = true
 	hp = 0.0
 	hp_changed.emit()
+	if sprite != null:
+		sprite.play("death")
 	AudioMan.play("death")
 	FX.burst(global_position, Color(0.9, 0.8, 0.5), 30, 240.0, 0.8)
 	FX.shake(1.0)
@@ -466,8 +659,46 @@ func _sword_tip_global() -> Vector2:
 func _bob() -> float:
 	return sin(anim_t * 9.0) * (1.8 if velocity.length() > 20.0 else 0.6)
 
+func _draw_censer(hand: Vector2) -> void:
+	# A chain swinging a glowing brazier — reach and arc over the sword's point.
+	var ang := _sword_angle()
+	var swing := sin(anim_t * 3.0) * 0.25 + (1.0 - swing_vis) * 1.2 - 0.6
+	var pivot := hand
+	var chain_len := 30.0 + swing_vis * 14.0
+	var head := pivot + Vector2.from_angle(ang + swing) * chain_len
+	# chain links
+	var links := 5
+	for i in links:
+		var t := float(i) / float(links)
+		var p := pivot.lerp(head, t)
+		draw_circle(p, 1.6, Color(0.55, 0.5, 0.45))
+	# censer body (brass bowl) + cleansing glow
+	Painter.glow(self, head, 12.0, Color(0.55, 0.85, 0.95, 0.5), 2)
+	draw_circle(head, 5.5, Color(0.65, 0.5, 0.25))
+	draw_arc(head, 5.5, 0, TAU, 12, Color(0.85, 0.72, 0.4), 1.4)
+	draw_circle(head, 2.6, Color(0.7, 0.95, 1.0, 0.9))
+	# rising incense embers
+	for i in 3:
+		var ep := head + Vector2(sin(anim_t * 4.0 + i * 2.0) * 3.0, -6.0 - i * 3.0 - fmod(anim_t * 14.0, 6.0))
+		draw_circle(ep, 1.2, Color(0.7, 0.92, 1.0, 0.4))
+
 func _draw() -> void:
 	Painter.shadow(self, 13.0, 1.8, 0.34)
+	if sprite != null:
+		# Production sprite renders the body; keep the motion trail, ult aura,
+		# and debug overlay drawn here.
+		if trail.size() > 1:
+			for i in range(trail.size() - 1):
+				var a1 := to_local(trail[i]["p"])
+				var a2 := to_local(trail[i + 1]["p"])
+				var k := float(trail[i]["t"]) / 0.18
+				draw_line(a1, a2, Color(1.0, 0.75, 0.3, 0.45 * k), 2.0 + 4.0 * k)
+		if not dead and ult_charge >= 100.0:
+			Painter.glow(self, Vector2(0, -14), 30.0, Color(1.0, 0.95, 0.6, 0.3 + 0.1 * sin(anim_t * 6.0)), 3)
+			Painter.rune_ring(self, Vector2(0, -14), 24.0 + sin(anim_t * 6.0) * 2.0, Color(1.0, 0.9, 0.55, 0.5), 6, anim_t * 2.0, 1.2)
+		if debug_overlay:
+			_draw_debug()
+		return
 	if dead:
 		draw_circle(Vector2(0, 4), 10.0, Color(0.4, 0.35, 0.3, 0.6))
 		draw_line(Vector2(-8, 2), Vector2(14, -4), Color(0.6, 0.5, 0.35, 0.7), 2.5)
@@ -560,12 +791,33 @@ func _draw() -> void:
 	for i in 3:
 		var ha := anim_t * 1.4 + TAU * i / 3.0
 		draw_circle(Vector2(2 * facing, -40 + bob) + Vector2.from_angle(ha) * 7.5, 1.3, halo)
-	# sword arm + flaming blade
+	# weapon arm
 	var hand := Vector2(12 * facing, -10 + bob)
 	draw_line(Vector2(7 * facing, -15 + bob), hand, skin.darkened(0.1), 3.0)
-	Painter.blade(self, hand, _sword_angle(), 34.0, anim_t)
+	if weapon_style == "censer":
+		_draw_censer(hand)
+	else:
+		Painter.blade(self, hand, _sword_angle(), 34.0, anim_t)
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	# Ult-ready aura
 	if ult_charge >= 100.0:
 		Painter.glow(self, Vector2(0, -14 + bob), 30.0, Color(1.0, 0.95, 0.6, 0.3 + 0.1 * sin(anim_t * 6.0)), 3)
 		Painter.rune_ring(self, Vector2(0, -14 + bob), 24.0 + sin(anim_t * 6.0) * 2.0, Color(1.0, 0.9, 0.55, 0.5), 6, anim_t * 2.0, 1.2)
+	if debug_overlay:
+		_draw_debug()
+
+func _draw_debug() -> void:
+	# Combat debug overlay (F3): hurt radius, active hit arc, aim, state, buffer.
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	draw_arc(Vector2.ZERO, 11.0, 0, TAU, 20, Color(1.0, 0.3, 0.3, 0.9), 1.5)  # hurt radius
+	draw_line(Vector2.ZERO, aim_dir * 40.0, Color(0.5, 0.9, 1.0, 0.8), 1.0)   # aim
+	if state == "attack" and (atk_phase == "windup" or atk_phase == "charge"):
+		var reach := float(atk.get("range", 90.0))
+		var arc := deg_to_rad(float(atk.get("arc", 100.0)))
+		var base := atk_dir.angle()
+		draw_arc(Vector2.ZERO, reach, base - arc * 0.5, base + arc * 0.5, 18, Color(1.0, 0.85, 0.2, 0.8), 2.0)
+	var font := ThemeDB.fallback_font
+	if font != null:
+		var info := "state:%s/%s  buf:%s  chg:%.2f  iframes:%.2f  ult:%d" % [
+			state, atk_phase, ",".join(input_buf.keys()), charge_t, iframes, int(ult_charge)]
+		draw_string(font, Vector2(-90, -56), info, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(0.7, 1.0, 0.7))

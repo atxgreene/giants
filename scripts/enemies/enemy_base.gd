@@ -43,6 +43,7 @@ var facing := 1.0
 var anim_t := 0.0
 var player: Node2D = null
 var seals_drop := 0
+var sprite: CharSprite = null    # production art, if a sheet exists; else procedural
 
 const SUBCLASS_PATHS := {
 	"ash_thrall": "res://scripts/enemies/ash_thrall.gd",
@@ -51,6 +52,7 @@ const SUBCLASS_PATHS := {
 	"nephilim_bloodling": "res://scripts/enemies/nephilim_bloodling.gd",
 	"bound_giant_spirit": "res://scripts/enemies/bound_giant_spirit.gd",
 	"watcher_hound": "res://scripts/enemies/watcher_hound.gd",
+	"pack_alpha": "res://scripts/enemies/watcher_hound.gd",
 	"smith_priest": "res://scripts/enemies/smith_priest.gd",
 	"half_buried_giant": "res://scripts/bosses/half_buried_giant.gd",
 	"first_blade": "res://scripts/bosses/first_blade.gd",
@@ -89,10 +91,15 @@ func _ready() -> void:
 	sh.radius = minf(hit_radius * 0.8, 18.0)
 	cs.shape = sh
 	add_child(cs)
+	sprite = CharSprite.try_make(id)
+	if sprite != null:
+		add_child(sprite)
 
 func _physics_process(delta: float) -> void:
 	anim_t += delta
 	queue_redraw()
+	if sprite != null and not dead:
+		_update_enemy_sprite()
 	flash_t = maxf(flash_t - delta, 0.0)
 	marked_t = maxf(marked_t - delta, 0.0)
 	buff_t = maxf(buff_t - delta, 0.0)
@@ -177,18 +184,50 @@ func _chase(delta: float) -> void:
 		velocity = velocity.lerp(to.normalized() * speed, clampf(8.0 * delta, 0.0, 1.0))
 	else:
 		velocity = velocity.move_toward(Vector2.ZERO, 800.0 * delta)
-	# soft separation
+	velocity += _separation()
+	velocity += _obstacle_avoidance(target)
+	move_and_slide()
+	facing = 1.0 if (player.global_position.x - global_position.x) >= 0.0 else -1.0
+	if attack_ready():
+		_start_windup()
+
+func _separation() -> Vector2:
+	# Anti-clumping: push apart from neighbours so packs surround rather than
+	# fuse into one collision blob. Ranged keep a wider personal space.
+	var sep := Vector2.ZERO
+	var personal := 38.0 if float(cfg.get("attack_range", 100.0)) > 250.0 else 32.0
 	for e in get_tree().get_nodes_in_group("enemies"):
 		if e == self or not is_instance_valid(e) or e.get("dead"):
 			continue
 		var d: Vector2 = global_position - e.global_position
 		var dist := d.length()
-		if dist > 0.1 and dist < 34.0:
-			velocity += d.normalized() * (34.0 - dist) * 6.0
-	move_and_slide()
-	facing = 1.0 if (player.global_position.x - global_position.x) >= 0.0 else -1.0
-	if attack_ready():
-		_start_windup()
+		if dist > 0.1 and dist < personal:
+			sep += d.normalized() * (personal - dist) * 7.0
+	return sep.limit_length(speed * 1.2)
+
+func _obstacle_avoidance(target: Vector2) -> Vector2:
+	# Lightweight navigation layer: steer around static props so enemies don't
+	# grind to a halt against a forge or idol on the way to the target.
+	var avoid := Vector2.ZERO
+	var to_target := (target - global_position)
+	for o in get_tree().get_nodes_in_group("obstacles"):
+		if not is_instance_valid(o):
+			continue
+		var orad := float(o.get("obstacle_radius"))
+		if orad <= 0.0:
+			continue
+		var d: Vector2 = global_position - o.global_position
+		var dist := d.length()
+		var threat := orad + hit_radius + 22.0
+		if dist > 0.1 and dist < threat:
+			# Push away, plus a tangential nudge so we slide past rather than
+			# stall head-on when the prop sits between us and the target.
+			var away := d.normalized()
+			var tangent := away.rotated(PI * 0.5)
+			if tangent.dot(to_target) < 0.0:
+				tangent = -tangent
+			avoid += away * (threat - dist) * 8.0 + tangent * (threat - dist) * 4.0
+	return avoid.limit_length(speed * 1.5)
 
 func _start_windup() -> void:
 	pick_attack()
@@ -251,6 +290,14 @@ func take_hit(amount: float, from_pos: Vector2, kb := 120.0, stagger := 1.0, opt
 		final *= 1.2 + RunState.mod("mark_dmg")
 	if armored and float(opts.get("armored_bonus", 0.0)) > 0.0:
 		final *= 1.0 + float(opts["armored_bonus"])
+	# Binding's tactical identity: a bound foe is a helpless target and takes
+	# +15% damage by default — valuable even if you never touch Revelation.
+	# The Aspect of Mercy trades that bonus for a penalty in exchange for sight.
+	if bound_t > 0.0:
+		if RunState.mod("bound_dmg_reduce") > 0.0:
+			final *= 1.0 - clampf(RunState.mod("bound_dmg_reduce"), 0.0, 0.9)
+		else:
+			final *= 1.15
 	final *= damage_taken_mult()
 	hp -= final
 	flash_t = 0.12
@@ -293,13 +340,15 @@ func die() -> void:
 		return
 	dead = true
 	telegraph = {}
+	if sprite != null:
+		sprite.play("death")
 	set_deferred("collision_layer", 0)
 	set_deferred("collision_mask", 0)
 	if RunState.active:
 		RunState.kills += 1
 		if bound_t > 0.0:
 			RunState.bound_kills += 1
-			RunState.add_revelation(3.0)
+			RunState.add_revelation(3.0 + 4.0 * RunState.mod("bound_rev"))
 		if elite:
 			RunState.add_revelation(10.0)
 			Game.toast("Elite destroyed. Revelation stirs.", Color(0.45, 0.75, 1.0))
@@ -309,6 +358,8 @@ func die() -> void:
 	AudioMan.play("edeath")
 	FX.burst(global_position, body_color, 18, 200.0, 0.55)
 	FX.burst(global_position, Color(0.95, 0.85, 0.5), 8, 120.0, 0.4)
+	FX.flash_light(global_position, body_color.lightened(0.35), 1.3 if elite else 0.9, 1.4 if elite else 0.9, 0.22)
+	FX.decal(global_position, "ember_scorch" if burn_t > 0.0 else "scorch", maxf(hit_radius * 1.3, 22.0))
 	died.emit(self)
 	var tw := create_tween()
 	tw.tween_property(self, "modulate:a", 0.0, 0.4)
@@ -331,9 +382,30 @@ func col(c: Color) -> Color:
 		out = out.lerp(Color(0.95, 0.8, 0.3), 0.25)
 	return out
 
+func _update_enemy_sprite() -> void:
+	sprite.flip_h = facing < 0.0
+	var stt := "idle"
+	if state == "windup":
+		stt = "windup"
+	elif state == "attack":
+		stt = "attack"
+	elif state == "stun" or bound_t > 0.0:
+		stt = "hurt"
+	elif velocity.length() > 16.0:
+		stt = "walk"
+	sprite.play(stt)
+
 func _draw() -> void:
 	_draw_telegraph()
 	Painter.shadow(self, hit_radius * 0.95, 1.7, 0.3)
+	if sprite != null:
+		# Production sprite renders the body; keep telegraph, shadow, elite ring,
+		# and status bars drawn here.
+		if elite and not dead:
+			Painter.rune_ring(self, Vector2.ZERO, hit_radius + 12.0,
+				Color(0.95, 0.8, 0.35, 0.45 + 0.15 * sin(anim_t * 4.0)), 8, anim_t * 1.2, 1.4)
+		_draw_status()
+		return
 	if state == "spawn" and not dead:
 		# rise out of the sand: scale in + dust offset
 		var k := clampf(1.0 - st / 0.45, 0.15, 1.0)
@@ -381,11 +453,20 @@ func _draw_status() -> void:
 			var a := TAU * i / 6.0 + anim_t * 2.0
 			draw_line(Vector2.from_angle(a) * (hit_radius + 2.0), Vector2.from_angle(a) * (hit_radius + 10.0), gold, 2.0)
 
+func _telegraph_color() -> Color:
+	# Default danger red, but accessibility settings can swap to a
+	# colorblind-safe high-contrast hue that does not rely on red/green.
+	if bool(Game.setting("colorblind_telegraphs")):
+		return Color(1.0, 0.85, 0.1)
+	if bool(Game.setting("high_contrast")):
+		return Color(1.0, 0.35, 0.3)
+	return Color(0.95, 0.25, 0.2)
+
 func _draw_telegraph() -> void:
 	if telegraph.is_empty() or state != "windup":
 		return
 	var prog := windup_progress()
-	var c := Color(0.95, 0.25, 0.2)
+	var c := _telegraph_color()
 	match str(telegraph.get("kind", "")):
 		"cone":
 			var dir: Vector2 = telegraph["dir"]

@@ -145,7 +145,7 @@ assets/                    # placeholder notes; everything is procedural for now
 
 ## Documents
 
-- `CHANGELOG.md` — versioned release notes (semver; current: v0.2.0)
+- `CHANGELOG.md` — versioned release notes (semver; current: v0.4.0)
 - `DESIGN_BRIEF.md` — pillars, loops, systems reference
 - `LORE_BIBLE.md` — cosmology, source-tier methodology, characters, biome bible
 - `ROADMAP.md` — expansion plan

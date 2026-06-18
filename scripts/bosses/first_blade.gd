@@ -166,6 +166,10 @@ func _attack_begin() -> void:
 			AudioMan.play("seal")
 		"fire_lanes":
 			var n2 := 3 if phase >= 3 else 2
+			# Mercy for the mobility-starved: thin the phase-2 lanes if the
+			# Witness has no movement/evasion reward to weave through them.
+			if phase == 2 and not RunState.has_mobility():
+				n2 = 1
 			var room := get_tree().get_first_node_in_group("room")
 			var lane_len := 1700.0
 			var center_x := global_position.x

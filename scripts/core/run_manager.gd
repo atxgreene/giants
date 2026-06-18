@@ -22,6 +22,14 @@ var run_hp := -1.0               # player hp carried between rooms
 var pools_available: Array = []
 var rev_50_announced := false
 
+# Run Director state (set by RunScene when a run begins).
+var director = null               # RunDirector
+var seed_value := 0
+var route_id := "pilgrimage"
+var route_name := "The Pilgrim Road"
+var forbidden_accepted := 0
+var forbidden_refused := 0
+
 var _mods: Dictionary = {}
 
 func _ready() -> void:
@@ -42,6 +50,9 @@ func reset() -> void:
 	weapon_upgrade = 0.0
 	run_hp = -1.0
 	rev_50_announced = false
+	forbidden_accepted = 0
+	forbidden_refused = 0
+	CodexMan.unlocked_this_run = 0
 	pools_available = ["michael", "gabriel", "raphael"]
 	if Game.profile.get("uriel_unlocked", false):
 		pools_available.append("uriel")
@@ -145,10 +156,23 @@ func add_revelation(v: float) -> void:
 	meters_changed.emit()
 
 func enemy_scale() -> Dictionary:
-	var depth_mult := 1.0 + float(room_index) * 0.05
+	var route_bonus := 0.0
+	if director != null:
+		route_bonus = director.enemy_scale_bonus() * float(room_index) * 0.2
+	var depth_mult := 1.0 + float(room_index) * 0.05 + route_bonus
 	var corrupt_mult := 1.2 if corruption >= 50.0 else 1.0
 	return {"hp": depth_mult * corrupt_mult, "dmg": depth_mult * corrupt_mult}
 
 func earn_seals(n: int) -> void:
 	seals_earned += n
 	Game.add_seals(n)
+
+func has_mobility() -> bool:
+	# Does the Witness have any movement/evasion edge? Used to ease boss lane
+	# density for players who skipped mobility rewards.
+	return ("rel_greaves" in relics) or has_mod("near_dodge_slow") or has_mod("flame_trail")
+
+func seed_display() -> String:
+	if director != null:
+		return director.seed_string()
+	return str(seed_value)

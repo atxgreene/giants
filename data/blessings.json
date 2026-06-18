@@ -50,11 +50,23 @@
     {"id": "f_leech", "name": "Tooth of the Devourer", "desc": "Heal for 6% of damage you deal. Hunger answers hunger. (+20 Corruption)", "mods": {"lifesteal": 0.06}, "corruption": 20},
     {"id": "f_third_eye", "name": "The Third Eye Opens", "desc": "Your crescent special fires a second crescent. You see too much. (+25 Corruption)", "mods": {"extra_projectile": 1}, "corruption": 25}
   ],
+  "duos": [
+    {"id": "duo_verdict", "name": "Verdict Pronounced", "requires": ["michael", "gabriel"], "desc": "Word and sword agree. Marked enemies take more damage AND your strikes stagger harder.", "mods": {"mark_dmg": 0.2, "stagger_mult": 0.3}},
+    {"id": "duo_shield_mercy", "name": "Shielded Mercy", "requires": ["michael", "raphael"], "desc": "The Prince guards; the Healer mends. Heal after each room, and deal more damage while wounded.", "mods": {"room_heal": 6, "judgment": 0.2}},
+    {"id": "duo_sword_fire", "name": "Sword of Fire", "requires": ["michael", "uriel"], "desc": "The blade at the gate of Eden was a flaming sword. Your strikes burn, and bite deeper into iron.", "mods": {"burn_on_hit": 1, "armored_bonus": 0.25}},
+    {"id": "duo_word_healing", "name": "Word of Healing", "requires": ["gabriel", "raphael"], "desc": "Annunciation and balm. Your Binding Seal heals more, and Revelation builds faster.", "mods": {"seal_heal": 4, "rev_gain": 0.3}},
+    {"id": "duo_tongues", "name": "Tongues of Flame", "requires": ["gabriel", "uriel"], "desc": "The message divides into fire. Your crescent marks AND splits into three on impact.", "mods": {"special_split": 1, "mark_on_special": 1}},
+    {"id": "duo_cauterize", "name": "Cauterize", "requires": ["raphael", "uriel"], "desc": "The wound is burned clean. Your dash leaves healing-fire, and no damage-over-time can touch you.", "mods": {"flame_trail": 1, "dot_immune": 1}}
+  ],
   "relics": [
     {"id": "rel_censer", "name": "Censer of Embers", "desc": "A swinging coal from the Watchtower brazier. Attacks have a chance to burn — your strikes now always burn.", "mods": {"burn_on_hit": 1}},
     {"id": "rel_phylactery", "name": "Witness's Phylactery", "desc": "Verses bound to the forehead. +25 Maximum Health.", "mods": {"max_hp": 25}},
     {"id": "rel_greaves", "name": "Bronze Greaves of the Runner", "desc": "Cast before the flood, untouched by it. Dash recovers 25% faster.", "mods": {"dash_cd": -0.25}},
     {"id": "rel_lapis", "name": "Lapis Tear", "desc": "A drop of the upper waters. Revelation builds 35% faster and +10 Maximum Health.", "mods": {"rev_gain": 0.35, "max_hp": 10}},
-    {"id": "rel_whetstone", "name": "Whetstone of the First Altar", "desc": "It has only ever sharpened consecrated edges. +15% damage.", "mods": {"dmg_mult": 0.15}}
+    {"id": "rel_whetstone", "name": "Whetstone of the First Altar", "desc": "It has only ever sharpened consecrated edges. +15% damage.", "mods": {"dmg_mult": 0.15}},
+    {"id": "rel_scapegoat", "name": "Cord of the Scapegoat", "desc": "The crimson cord tied to the goat sent into the wilderness. +15 Maximum Health, and corruption you take is reduced.", "mods": {"max_hp": 15, "corrupt_reduce": 0.2}},
+    {"id": "rel_chain", "name": "Length of the Binding Chain", "desc": "A link of the chain Raphael used on Azazel. Binding an enemy heals you, and the bound yield more Revelation when they fall.", "mods": {"bind_heal": 3, "bound_rev": 0.5}},
+    {"id": "rel_starchart", "name": "Star-Chart of Uriel", "desc": "The courses of the luminaries, drawn in a warm hand. Revelation builds 25% faster and your Ultimate charges faster.", "mods": {"rev_gain": 0.25, "ult_charge_mult": 0.2}},
+    {"id": "rel_anvil", "name": "Shard of the First Anvil", "desc": "Cold iron from the forge you broke. +25% damage against the armored, and +8% damage to everything.", "mods": {"armored_bonus": 0.25, "dmg_mult": 0.08}}
   ]
 }

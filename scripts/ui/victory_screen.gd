@@ -28,13 +28,8 @@ func _ready() -> void:
 		15, UIKit.STARFIRE)
 	unlocks.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(unlocks)
-	var stats := UIKit.label(
-		"Rooms cleared: %d      Foes destroyed: %d      Bound: %d      Corruption: %d      Revelation: %d" % [
-			RunState.rooms_cleared, RunState.kills, RunState.bound_kills,
-			int(RunState.corruption), int(RunState.revelation)],
-		14, UIKit.ASH)
-	stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	v.add_child(stats)
+	v.add_child(UIKit.label(" ", 4))
+	v.add_child(_summary())
 	v.add_child(UIKit.label(" ", 8))
 	var back := UIKit.button("Return to the Watchtower", 20)
 	back.pressed.connect(func(): Game.goto("hub"))
@@ -44,3 +39,27 @@ func _ready() -> void:
 	root.add_child(v)
 	back.grab_focus()
 	AudioMan.music("hub")
+
+func _summary() -> Label:
+	# Full run summary: route, seed, meters, bound kills, forbidden choices,
+	# weapon/aspect, and codex unlocked this run.
+	var weapon_name := "Flaming Sword of Commission"
+	var weapon_id := str(Game.profile.get("weapon", "flaming_sword"))
+	var wdef: Dictionary = DataDB.weapons.get(weapon_id, {})
+	if wdef.has("name"):
+		weapon_name = str(wdef["name"])
+	var aspect_id := str(Game.profile.get("aspect", "commission"))
+	var aspect_name := str(DataDB.weapons.get("aspects", {}).get(aspect_id, {}).get("name", aspect_id))
+	var codex_new := CodexMan.unlocked_this_run
+	var text := "—  RUN SUMMARY  —\n"
+	text += "Route: %s          Seed: %s\n" % [RunState.route_name, RunState.seed_display()]
+	text += "Rooms cleared: %d      Foes destroyed: %d      Bound kills: %d\n" % [
+		RunState.rooms_cleared, RunState.kills, RunState.bound_kills]
+	text += "Corruption: %d      Revelation: %d\n" % [int(RunState.corruption), int(RunState.revelation)]
+	text += "Forbidden gifts — accepted: %d, refused: %d\n" % [
+		RunState.forbidden_accepted, RunState.forbidden_refused]
+	text += "Weapon: %s  ·  Aspect: %s\n" % [weapon_name, aspect_name]
+	text += "Codex pages unlocked this run: %d" % codex_new
+	var stats := UIKit.label(text, 14, UIKit.ASH)
+	stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	return stats

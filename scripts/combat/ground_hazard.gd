@@ -14,10 +14,15 @@ var dps := 8.0
 var tick := 0.0
 var friendly := false         # true = damages enemies (Uriel flame trail)
 var corrupting := false       # adds corruption to the player on tick
+var cleanse := false          # Raphael cleanse zone: soothes the Witness
+var convert_pools := false    # Dudael: unmakes nearby corruption pools
 var color := Color(0.5, 0.2, 0.6)
 var phase := "telegraph"
 var anim := 0.0
 var enemy_tick_ids := {}
+
+func _ready() -> void:
+	add_to_group("hazards")
 
 static func spawn(parent: Node, pos: Vector2, cfg: Dictionary = {}) -> GroundHazard:
 	var h := GroundHazard.new()
@@ -32,12 +37,22 @@ static func spawn(parent: Node, pos: Vector2, cfg: Dictionary = {}) -> GroundHaz
 	h.dps = float(cfg.get("dps", 8.0))
 	h.friendly = bool(cfg.get("friendly", false))
 	h.corrupting = bool(cfg.get("corrupting", false))
+	h.cleanse = bool(cfg.get("cleanse", false))
+	h.convert_pools = bool(cfg.get("convert_pools", false))
 	h.color = cfg.get("color", Color(0.5, 0.2, 0.6))
 	if h.telegraph_t <= 0.0:
 		h.phase = "active"
 	h.z_index = -5
 	parent.add_child(h)
 	return h
+
+func neutralize() -> void:
+	## Turn a harmful corruption pool into harmless ash (Dudael / Wound ult).
+	if friendly:
+		return
+	corrupting = false
+	dps = 0.0
+	color = Color(0.55, 0.5, 0.45)
 
 func _process(delta: float) -> void:
 	anim += delta
@@ -49,6 +64,7 @@ func _process(delta: float) -> void:
 				phase = "active"
 				if not friendly:
 					AudioMan.play("fire")
+					FX.flash_light(global_position, color.lightened(0.2), 1.4, 1.6, 0.25)
 		"active":
 			active_t -= delta
 			tick -= delta
@@ -57,22 +73,47 @@ func _process(delta: float) -> void:
 				_apply_tick()
 			if active_t <= 0.0:
 				phase = "fade"
+				_leave_decal()
 		"fade":
 			modulate.a -= delta * 3.0
 			if modulate.a <= 0.0:
 				queue_free()
 
+func _leave_decal() -> void:
+	# What the fire leaves on the ground: ash from cleanse, a corruption stain
+	# from defiled pools, scorch from forge-fire.
+	var dk := "ash" if cleanse else ("corruption" if corrupting else "scorch")
+	if kind == "lane":
+		var dir := Vector2.RIGHT.rotated(angle)
+		for i in 3:
+			FX.decal(global_position + dir * (float(i - 1) * length * 0.28), dk, width * 0.55)
+	else:
+		FX.decal(global_position, dk, radius * 0.9)
+
 func _contains(point: Vector2) -> bool:
-	if kind == "pool":
+	if kind != "lane":
 		return global_position.distance_to(point) <= radius
 	var local := (point - global_position).rotated(-angle)
 	return absf(local.x) <= length * 0.5 and absf(local.y) <= width * 0.5
 
 func _apply_tick() -> void:
 	if friendly:
+		var corrupted_bonus := 1.0
 		for e in get_tree().get_nodes_in_group("enemies"):
 			if is_instance_valid(e) and not e.get("dead") and _contains(e.global_position):
-				e.call("take_hit", dps * 0.4, global_position, 0.0, 0.2, {})
+				# Cleanse zones bite harder against corruption-born foes (hounds).
+				var mult := corrupted_bonus
+				if cleanse and str(e.get("id")) in ["watcher_hound", "pack_alpha"]:
+					mult = 1.8
+				e.call("take_hit", dps * 0.4 * mult, global_position, 0.0, 0.2, {})
+		if cleanse:
+			var player := get_tree().get_first_node_in_group("player")
+			if player and not player.get("dead") and _contains(player.global_position):
+				RunState.add_corruption(-1.2)
+			if convert_pools:
+				for h in get_tree().get_nodes_in_group("hazards"):
+					if h != self and is_instance_valid(h) and not h.friendly and global_position.distance_to(h.global_position) <= radius + h.radius:
+						h.neutralize()
 	else:
 		var player := get_tree().get_first_node_in_group("player")
 		if player and not player.get("dead") and _contains(player.global_position):
@@ -87,7 +128,7 @@ func _draw() -> void:
 	if phase == "telegraph":
 		var c := color
 		c.a = 0.3 + 0.2 * pulse
-		if kind == "pool":
+		if kind != "lane":
 			draw_arc(Vector2.ZERO, radius, 0, TAU, 40, c, 3.0)
 			c.a *= 0.4
 			draw_circle(Vector2.ZERO, radius, c)
@@ -99,7 +140,7 @@ func _draw() -> void:
 	else:
 		var c2 := color
 		c2.a = 0.55 * pulse * modulate.a
-		if kind == "pool":
+		if kind != "lane":
 			draw_circle(Vector2.ZERO, radius, c2)
 			c2 = color.lightened(0.3)
 			c2.a = 0.5 * modulate.a

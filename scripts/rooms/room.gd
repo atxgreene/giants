@@ -15,6 +15,7 @@ const REWARD_INFO := {
 	"relic": {"label": "Relic", "color": Color(0.7, 0.5, 0.9)},
 	"weapon": {"label": "Weapon Fire", "color": Color(1.0, 0.55, 0.2)},
 	"forbidden": {"label": "FORBIDDEN KNOWLEDGE", "color": Color(0.85, 0.2, 0.25)},
+	"revelation": {"label": "✶ A HIDDEN DOOR ✶", "color": Color(0.45, 0.85, 1.0)},
 	"advance": {"label": "Onward", "color": Color(0.8, 0.8, 0.8)},
 	"miniboss": {"label": "The Grave of the Half-Buried", "color": Color(0.85, 0.6, 0.35)},
 	"boss": {"label": "The First Forge", "color": Color(0.9, 0.3, 0.2)},
@@ -51,6 +52,7 @@ func build(t_id: String) -> void:
 	_build_walls()
 	_build_props()
 	_build_atmosphere()
+	_build_environment_lights()
 	match kind:
 		"combat":
 			pass # waves start via start_room()
@@ -58,6 +60,27 @@ func build(t_id: String) -> void:
 			pass
 		"boss":
 			pass
+
+func _build_environment_lights() -> void:
+	# Big fixed light sources so the arena is lit by its own fire/starlight.
+	if not bool(Game.setting("bloom")):
+		return
+	if kind == "hub":
+		# Steady holy glow over the great seal.
+		var seal := FX.make_emissive_light(Color(0.95, 0.85, 0.55), 0.5, 3.2, false)
+		seal.position = bounds.get_center()
+		add_child(seal)
+		return
+	# North-corner braziers (matching the drawn brazier flames).
+	for bx in [bounds.position.x - 13.0, bounds.end.x + 13.0]:
+		var br := FX.make_emissive_light(Color(1.0, 0.5, 0.15), 0.9, 1.7, true)
+		br.position = Vector2(bx, bounds.position.y - 108.0)
+		add_child(br)
+	if kind == "boss":
+		# The First Forge: a deep, restless forge-glow fills the arena.
+		var forge_glow := FX.make_emissive_light(Color(1.0, 0.4, 0.14), 0.7, 4.0, true)
+		forge_glow.position = bounds.get_center()
+		add_child(forge_glow)
 
 func player_spawn() -> Vector2:
 	return Vector2(bounds.position.x + 110.0, bounds.get_center().y)
@@ -351,9 +374,19 @@ class FloorLayer extends Node2D:
 				var edge := clampf(maxf(dx, dy), 0.0, 1.0)
 				c = c.darkened(edge * edge * 0.34)
 				c = c.lightened((1.0 - edge) * 0.05)
-				draw_colored_polygon(PackedVector2Array([
-					Vector2(cx, cy - th * 0.5), Vector2(cx + tw * 0.5, cy),
-					Vector2(cx, cy + th * 0.5), Vector2(cx - tw * 0.5, cy)]), c)
+				var top := Vector2(cx, cy - th * 0.5)
+				var rgt := Vector2(cx + tw * 0.5, cy)
+				var bot := Vector2(cx, cy + th * 0.5)
+				var lft := Vector2(cx - tw * 0.5, cy)
+				draw_colored_polygon(PackedVector2Array([top, rgt, bot, lft]), c)
+				# Subtle bevel on a scattered subset: lit upper edges, shadowed
+				# lower edges — fakes height/grout so the floor isn't flat.
+				if v < 0.30:
+					draw_line(top, rgt, c.lightened(0.22), 1.0)
+					draw_line(top, lft, c.lightened(0.12), 1.0)
+				elif v > 0.80:
+					draw_line(bot, rgt, c.darkened(0.28), 1.0)
+					draw_line(bot, lft, c.darkened(0.28), 1.0)
 
 	func _draw_decals(rng: RandomNumberGenerator) -> void:
 		# Pebbles, bone chips, and faint sand drifts.
@@ -562,6 +595,8 @@ class PropNode extends Node2D:
 	var kind := "bones"
 	var seed_v := 0.0
 
+	var obstacle_radius := 0.0
+
 	func _ready() -> void:
 		seed_v = randf() * 10.0
 		if kind == "crack":
@@ -576,7 +611,34 @@ class PropNode extends Node2D:
 			cs.shape = sh
 			body.add_child(cs)
 			add_child(body)
+			# Make it known to the enemy navigation layer so AI steers around it
+			# instead of grinding against the collider.
+			obstacle_radius = 30.0 if kind == "forge" else 24.0
+			add_to_group("obstacles")
+		_add_emissive_light()
 		queue_redraw()
+
+	func _add_emissive_light() -> void:
+		# Emissive props light the floor around them (HD-2D). Gated by the Bloom
+		# setting; additive, so it only ever brightens.
+		if not bool(Game.setting("bloom")):
+			return
+		match kind:
+			"forge":
+				var l := FX.make_emissive_light(Color(1.0, 0.5, 0.16), 1.0, 1.7, true)
+				l.position = Vector2(0, -14)
+				add_child(l)
+			"crack":
+				var l2 := FX.make_emissive_light(Color(1.0, 0.45, 0.12), 0.7, 1.3, true)
+				add_child(l2)
+			"starfall":
+				var l3 := FX.make_emissive_light(Color(0.5, 0.8, 1.0), 0.75, 1.4, false)
+				l3.position = Vector2(0, -12)
+				add_child(l3)
+			"idol":
+				var l4 := FX.make_emissive_light(Color(0.95, 0.3, 0.2), 0.35, 0.8, true)
+				l4.position = Vector2(0, -50)
+				add_child(l4)
 
 	const SHADOW_R := {"bones": 22.0, "idol": 15.0, "forge": 27.0, "rack": 21.0,
 		"altar_broken": 26.0, "starfall": 13.0}

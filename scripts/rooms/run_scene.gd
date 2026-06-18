@@ -10,6 +10,7 @@ var player: Player
 var cam: GameCamera
 var hud: HUD
 var room: RoomNode
+var director: RunDirector
 var seq: Array = []
 var idx := -1
 var pending_reward := ""
@@ -18,14 +19,28 @@ var transitioning := false
 var run_over := false
 var heal_drunk := false
 
+# Optional seed/route requested from the start altar or seed entry. 0 = random.
+var requested_seed := 0
+var requested_route := ""
+
+func setup(args: Dictionary) -> void:
+	requested_seed = int(args.get("seed", 0))
+	requested_route = str(args.get("route", ""))
+
 func _ready() -> void:
 	add_to_group("run")
 	RunState.reset()
 	Game.profile["runs"] = int(Game.profile.get("runs", 0)) + 1
 	Game.save()
-	seq = ["start", "arena_small", "forge_ambush",
-		"elite_forge" if randf() < 0.6 else "relic_shrine",
-		"bone_corridor", "vision_room", "miniboss_arena", "arena_wide", "boss_arena"]
+	director = RunDirector.new()
+	director.generate(requested_seed, requested_route)
+	RunState.director = director
+	RunState.seed_value = director.seed_value
+	RunState.route_id = director.route_id
+	RunState.route_name = director.route_name()
+	# Seed the global RNG so card shuffles and spawn jitter are reproducible too.
+	seed(director.seed_value)
+	seq = director.nodes
 	player = Player.new()
 	player.died.connect(_on_player_died)
 	cam = GameCamera.new()
@@ -41,12 +56,12 @@ func _ready() -> void:
 	fade_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	fade_layer.add_child(fade_rect)
 	add_child(fade_layer)
-	FX.attach_vignette(self)
+	FX.attach_atmosphere(self, "desert")
 	AudioMan.music("desert")
 	CodexMan.unlock("desert-of-azazel")
 	CodexMan.unlock("watchers")
 	_enter_room("")
-	Game.toast("The Desert of Azazel. Walk as a Witness.", Color(0.92, 0.86, 0.7))
+	Game.toast("The Desert of Azazel — %s.  Seed: %s" % [director.route_name(), director.seed_string()], director.route_color())
 
 func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("pause") and not run_over:
@@ -76,7 +91,8 @@ func _swap_room() -> void:
 	if is_instance_valid(room):
 		room.queue_free()
 	room = RoomNode.new()
-	room.build(seq[idx])
+	var template_id: String = director.template_for(idx)
+	room.build(template_id)
 	room.room_cleared.connect(_on_room_cleared)
 	room.gate_entered.connect(_on_gate_entered)
 	add_child(room)
@@ -90,16 +106,26 @@ func _swap_room() -> void:
 	RunState.took_damage_this_room = false
 	hud.set_room_label(str(room.template["name"]), idx, seq.size() - 1)
 	hud.set_pending_reward(pending_reward)
-	if seq[idx] == "boss_arena":
+	if room.kind == "boss":
 		AudioMan.music("boss")
 		Game.toast("\"You call this judgment? I gave mankind the blade. You gave them silence.\"", Color(0.95, 0.8, 0.45))
+	elif room.kind == "miniboss":
+		AudioMan.music("miniboss")
+	else:
+		AudioMan.music("desert")
+	if bool(room.template.get("corrupted", false)):
+		Game.toast("This ground is defiled. The fallen are stronger here.", Color(0.8, 0.3, 0.4))
+		AudioMan.play("whisper")
 	match room.kind:
 		"start":
 			room.force_clear()
 		"shrine":
 			room.add_interact_point(room.bounds.get_center(), "Commune at the shrine", "shrine", _shrine_relic)
 		"vision":
-			room.add_interact_point(room.bounds.get_center(), "Witness the dream", "vision", _vision_dream)
+			if bool(room.template.get("revelation", false)):
+				room.add_interact_point(room.bounds.get_center(), "Open the chamber", "vision", _revelation_event)
+			else:
+				room.add_interact_point(room.bounds.get_center(), "Witness the dream", "vision", _vision_dream)
 		_:
 			room.start_room()
 
@@ -119,6 +145,13 @@ func _on_room_cleared() -> void:
 func _on_gate_entered(reward: String) -> void:
 	if transitioning or run_over:
 		return
+	if reward == "revelation":
+		# A hidden Revelation door: splice the Opened Chamber into the road.
+		director.insert_revelation_room(idx)
+		RunState.run_hp = player.hp
+		Game.toast("A door that was not there a moment ago. You step through.", Color(0.45, 0.75, 1.0))
+		_enter_room("")
+		return
 	var carried := reward
 	if reward in ["advance", "miniboss", "boss"]:
 		carried = ""
@@ -129,39 +162,8 @@ func _open_exit_gates() -> void:
 	var next := idx + 1
 	if next >= seq.size():
 		return
-	var next_kind := str(DataDB.rooms["templates"][seq[next]]["kind"])
-	var options: Array = []
-	match next_kind:
-		"miniboss":
-			options = ["miniboss"]
-		"boss":
-			options = ["boss"]
-		"shrine", "vision":
-			options = ["advance"]
-		_:
-			if idx == 0:
-				options = ["blessing"]
-			elif seq[idx] == "miniboss_arena":
-				options = ["heal", _random_reward(["heal"])]
-			else:
-				var first := _random_reward([])
-				options = [first, _random_reward([first])]
-				if RunState.has_mod("extra_choice"):
-					options.append(_random_reward(options))
+	var options: Array = director.gate_options(idx, RunState.has_mod("extra_choice"))
 	room.open_gates(options)
-
-func _random_reward(exclude: Array) -> String:
-	var weighted := {
-		"blessing": 4, "currency": 2, "heal": 2, "codex": 2,
-		"relic": 2, "weapon": 1, "forbidden": 1
-	}
-	var pool: Array = []
-	for k in weighted:
-		if k in exclude:
-			continue
-		for i in int(weighted[k]):
-			pool.append(k)
-	return pool[randi() % pool.size()]
 
 # ------------------------------------------------------------- rewards
 
@@ -193,7 +195,7 @@ func _grant_pending_reward() -> void:
 			AudioMan.play("fire")
 
 func _offer_blessings() -> void:
-	var pool_key: String = RunState.pools_available[randi() % RunState.pools_available.size()]
+	var pool_key: String = director.pick_blessing_pool()
 	var pool: Dictionary = DataDB.blessings["pools"][pool_key]
 	var candidates: Array = []
 	for b in pool["blessings"]:
@@ -205,7 +207,13 @@ func _offer_blessings() -> void:
 		return
 	candidates.shuffle()
 	var cards: Array = []
-	for b in candidates.slice(0, 3):
+	# Hades-style duo: if the Witness already holds blessings from two pools,
+	# offer the bond between them in place of one ordinary card.
+	var duo := _available_duo()
+	if not duo.is_empty():
+		cards.append({"id": duo["id"], "name": "✦ " + str(duo["name"]) + " (Duo)",
+			"desc": str(duo["desc"]), "color": Color(0.96, 0.93, 0.78)})
+	for b in candidates.slice(0, 3 - cards.size()):
 		cards.append({"id": b["id"], "name": b["name"], "desc": b["desc"],
 			"color": Color(str(pool["color"]))})
 	var rs := RewardScreen.new()
@@ -217,6 +225,28 @@ func _offer_blessings() -> void:
 			RunState.add_blessing(id)
 			player.refresh_stats())
 	add_child(rs)
+
+func _available_duo() -> Dictionary:
+	# A duo unlocks once the Witness holds at least one blessing from each of
+	# its two required pools and does not already have it.
+	var owned_pools := {}
+	for id in RunState.blessings:
+		var b := DataDB.blessing_by_id(id)
+		var p := str(b.get("pool", ""))
+		if p in ["michael", "gabriel", "raphael", "uriel"]:
+			owned_pools[p] = true
+	for duo in DataDB.blessings.get("duos", []):
+		if duo["id"] in RunState.blessings:
+			continue
+		var reqs: Array = duo.get("requires", [])
+		var ok := true
+		for r in reqs:
+			if not owned_pools.has(r):
+				ok = false
+				break
+		if ok:
+			return duo
+	return {}
 
 func _offer_forbidden() -> void:
 	var cards: Array = []
@@ -232,13 +262,41 @@ func _offer_forbidden() -> void:
 	rs.refuse_text = "Refuse (+10 Revelation)"
 	rs.chosen.connect(func(id: String):
 		if id == "":
+			RunState.forbidden_refused += 1
 			RunState.add_revelation(10.0)
 			Game.toast("Refused. The desert is quieter for a moment.", Color(0.45, 0.75, 1.0))
 		else:
+			RunState.forbidden_accepted += 1
 			RunState.add_blessing(id)
 			player.refresh_stats()
+			_check_forbidden_rebuke()
 		CodexMan.unlock("forbidden-knowledge"))
 	add_child(rs)
+
+func _check_forbidden_rebuke() -> void:
+	# Michael answers a Witness who keeps reaching for forbidden gifts.
+	if RunState.forbidden_accepted == 3 and not Game.profile.get("michael_rebuke_seen", false):
+		Game.profile["michael_rebuke_seen"] = true
+		Game.profile["michael_disapproves"] = true
+		Game.save()
+		CodexMan.unlock("michael-rebuke")
+		var db := DialogueBox.new()
+		add_child(db)
+		db.play(DataDB.dialogue_lines("michael_rebuke"), Callable())
+
+func _revelation_event() -> void:
+	var event_id: String = director.pick_revelation_event()
+	var lines: Array = DataDB.dialogue_lines("rev_" + event_id.replace("-", "_"))
+	if lines.is_empty():
+		lines = DataDB.dialogue_lines("vision")
+	var db := DialogueBox.new()
+	add_child(db)
+	db.play(lines, func():
+		CodexMan.unlock(event_id)
+		RunState.add_revelation(15.0)
+		RunState.earn_seals(20)
+		Game.toast("The chamber closes. You carry what you saw.", Color(0.45, 0.85, 1.0))
+		room.force_clear())
 
 func _offer_relics() -> void:
 	var candidates: Array = []
@@ -285,6 +343,10 @@ func boss_temptation(boss: FirstBlade) -> void:
 	cs.accept_text = "ACCEPT — Edge of Azazel\n+10% sword damage, permanently.\n+25 Corruption. Michael will know."
 	cs.refuse_text = "REFUSE — Seal of Michael\n+10 Revelation. A codex page turns.\nThe Blade enters its desperate hour."
 	cs.decided.connect(func(accepted: bool):
+		if accepted:
+			RunState.forbidden_accepted += 1
+		else:
+			RunState.forbidden_refused += 1
 		boss.apply_temptation(accepted))
 	add_child(cs)
 
@@ -295,6 +357,10 @@ func on_boss_defeated() -> void:
 	Game.profile["boss_defeated"] = true
 	Game.profile["uriel_unlocked"] = true
 	Game.profile["wins"] = int(Game.profile.get("wins", 0)) + 1
+	# Raphael honours a Witness who breaks the Blade without being defiled.
+	if RunState.corruption < 20.0 and not Game.profile.get("raphael_clean_seen", false):
+		Game.profile["raphael_clean_seen"] = true
+		CodexMan.unlock("raphael-clean")
 	Game.save()
 	CodexMan.unlock("teaching-of-weapons")
 	CodexMan.unlock("uriel")

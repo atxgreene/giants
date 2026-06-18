@@ -1,0 +1,64 @@
+# Quality gate: runs on every push and PR. Unlike the export jobs, this is
+# allowed to FAIL the build. It catches broken scripts (import is no longer
+# `|| true`), a broken/softlockable run graph or save migration (the headless
+# smoke test), a broken web export, and version drift between the engine and
+# the docs.
+name: ci
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  quality:
+    name: Import + smoke test + web boot
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.3
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install export templates
+        run: |
+          mkdir -p ~/.local/share/godot/export_templates
+          ln -sfn /root/.local/share/godot/export_templates/4.3.stable ~/.local/share/godot/export_templates/4.3.stable
+
+      - name: Import assets (fails on parse/compile errors)
+        run: godot --headless --import
+
+      - name: Headless smoke test
+        run: |
+          cp project.godot project.godot.bak
+          sed -i 's#run/main_scene="res://scenes/main.tscn"#run/main_scene="res://scenes/ci/smoke_test.tscn"#' project.godot
+          set +e
+          timeout 120 godot --headless
+          code=$?
+          mv project.godot.bak project.godot
+          if [ $code -ne 0 ]; then
+            echo "Smoke test failed with exit code $code"
+            exit $code
+          fi
+
+      - name: Web export boot check
+        run: |
+          mkdir -p build/web
+          godot --headless --export-release "Web" build/web/index.html
+          for f in index.html index.wasm index.pck; do
+            if [ ! -s "build/web/$f" ]; then
+              echo "Web export missing or empty: $f"
+              exit 1
+            fi
+          done
+          echo "Web export produced: $(ls -1 build/web | tr '\n' ' ')"
+
+  version-consistency:
+    name: Version / changelog / README consistency
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Check version drift
+        run: python3 scripts/tools/check_version.py
