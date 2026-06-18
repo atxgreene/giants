@@ -34,10 +34,18 @@ func light_texture() -> GradientTexture2D:
 ## parents it (e.g. the player) so the lit pool follows. Gated by the Bloom
 ## setting so it can be turned off; additive, so it can never darken.
 func make_key_light(color := Color(1.0, 0.86, 0.6), energy := 0.85, scale := 2.6) -> Node:
-	var light := PointLight2D.new()
+	return make_emissive_light(color, energy, scale, false)
+
+## An additive light pool for an emissive prop (forge fire, molten crack,
+## starfall, brazier, hub seal). `flicker` adds fire-light wobble. Additive, so
+## it only ever brightens the environment around the source.
+func make_emissive_light(color: Color, energy: float, scale: float, flicker := true) -> Node:
+	var light := FlickerLight.new()
 	light.texture = light_texture()
 	light.color = color
+	light.base_energy = energy
 	light.energy = energy
+	light.do_flicker = flicker
 	light.blend_mode = Light2D.BLEND_MODE_ADD
 	light.texture_scale = scale
 	light.z_index = -8
@@ -266,6 +274,23 @@ func flash_screen(color := Color(1, 1, 1, 0.35), dur := 0.25) -> void:
 	tw.tween_callback(layer.queue_free)
 
 # ------------------------------------------------------------- inner classes
+
+class FlickerLight extends PointLight2D:
+	## Additive light that breathes like firelight. Steady (do_flicker=false)
+	## for holy/star sources, restless for forge fire and braziers.
+	var base_energy := 1.0
+	var do_flicker := true
+	var t := 0.0
+
+	func _ready() -> void:
+		t = randf() * 10.0
+
+	func _process(delta: float) -> void:
+		if not do_flicker:
+			return
+		t += delta
+		var f := 0.8 + 0.14 * sin(t * 8.0) + 0.06 * sin(t * 21.0 + 1.3) + 0.04 * sin(t * 3.0)
+		energy = base_energy * f
 
 class Atmosphere extends Control:
 	## Screen-space HD-2D pass: tilt-shift depth bands (top/bottom), drifting

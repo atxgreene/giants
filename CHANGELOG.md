@@ -65,6 +65,11 @@ protects build quality instead of just producing builds.
   - A warm additive **Light2D key-light** follows the Witness for a lit pool
     (cool light for the Censer). Murk (vignette + tilt-shift) toned down and
     the grade warmed so the scene doesn't read cold.
+  - **Environment is lit by its own sources**: forges, molten cracks, idols,
+    and starfall shards cast flickering colored light pools; north-corner
+    braziers light each arena; the hub seal glows steadily and the boss arena
+    has a restless forge-glow. Floor tiles gained a subtle bevel (lit upper /
+    shadowed lower edges) so the ground reads with height instead of flat.
 
 ### Added — Durability & accessibility
 - Save versioning (`save_version`, migration table, pre-migration backup,
