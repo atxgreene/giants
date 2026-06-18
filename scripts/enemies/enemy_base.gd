@@ -51,6 +51,7 @@ const SUBCLASS_PATHS := {
 	"nephilim_bloodling": "res://scripts/enemies/nephilim_bloodling.gd",
 	"bound_giant_spirit": "res://scripts/enemies/bound_giant_spirit.gd",
 	"watcher_hound": "res://scripts/enemies/watcher_hound.gd",
+	"pack_alpha": "res://scripts/enemies/watcher_hound.gd",
 	"smith_priest": "res://scripts/enemies/smith_priest.gd",
 	"half_buried_giant": "res://scripts/bosses/half_buried_giant.gd",
 	"first_blade": "res://scripts/bosses/first_blade.gd",

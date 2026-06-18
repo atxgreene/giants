@@ -17,6 +17,9 @@ func _ready() -> void:
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	v.add_child(sub)
 	v.add_child(UIKit.label(" ", 8))
+	var route_line := UIKit.label("%s      Seed: %s" % [RunState.route_name, RunState.seed_display()], 14, UIKit.ASH)
+	route_line.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	v.add_child(route_line)
 	var stats := UIKit.label(
 		"Rooms cleared: %d      Foes destroyed: %d      Bound: %d\nSeals carried home: %d      Corruption at the end: %d      Revelation: %d" % [
 			RunState.rooms_cleared, RunState.kills, RunState.bound_kills,

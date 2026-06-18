@@ -103,6 +103,62 @@
     "relevance": "Maintains the Witness Archive — this codex. Sorts every entry into its source tier with a confidence that ought, itself, to be a source tier.",
     "mystery": "Enoch was a scribe, and was taken, and 'was not, for God took him.' The Archive neither confirms nor denies. The Scribe's handwriting in the oldest files has not changed in any sample, ever."
   },
+  "seventh-seal": {
+    "title": "The Seventh Seal",
+    "tier": 2,
+    "summary": "1 Enoch 10 records the sentence on the Watchers and their children, sealed against the day of judgment: bound for seventy generations under the hills until the day of the consummation. The Opened Chamber shows a vision of seals — not on a scroll, as in Revelation 5–8, but on the earth itself, each one a place where something was shut and the key thrown into deep water.",
+    "unlocked_by": "Opening a hidden Revelation chamber.",
+    "relevance": "A Revelation-gated vision. It teaches that binding is not killing; the bound wait, and waiting is a kind of time bomb the righteous agree to carry.",
+    "mystery": "Seventy generations. The Archive has done the arithmetic in the margin, then scratched it out."
+  },
+  "the-measure": {
+    "title": "The Measure of the Giants",
+    "tier": 3,
+    "summary": "The Book of Giants and later tradition trade wildly different heights for the giants — three hundred cubits in one stream, three thousand in another, dwindling by the generation. The Opened Chamber shows the measuring itself: an angel with a reed (Ezekiel 40, Revelation 11) walking the length of a fallen body, marking where mercy would have to reach to cover it.",
+    "unlocked_by": "Opening a hidden Revelation chamber.",
+    "relevance": "A Revelation-gated vision. The figures contradict each other on purpose; the Archive files it under Book of Giants Fragment and lets the numbers fight.",
+    "mystery": "The reed in the vision is the same length as your binding circle. The Archive noticed this before you did."
+  },
+  "the-roster-of-watchers": {
+    "title": "The Roster of Watchers",
+    "tier": 2,
+    "summary": "1 Enoch 6:7–8 names the chiefs of the two hundred — Shemihazah, Arteqoph, Ramtel, Kokabiel, Ramiel, Daniel, Zeqiel, Baraqel, Asael, Hermani, Matarel, Ananel, Setawel, Samsiel, Sahriel, Tummiel, Turiel, Yamiel, and others — each tied to a forbidden teaching. The Opened Chamber shows the roster being read aloud, and at each name a lamp in the desert goes dark.",
+    "unlocked_by": "Opening a hidden Revelation chamber.",
+    "relevance": "A Revelation-gated vision. Confirms that what you fight is organized: not chaos, but a curriculum with a faculty.",
+    "mystery": "The roster the chamber reads is longer than the one in the text. You do not recognize the additional names. One of them is read in your own voice."
+  },
+  "michael-rebuke": {
+    "title": "\"The Lord Rebuke You\"",
+    "tier": 6,
+    "summary": "After the Witness accepts forbidden gifts a third time, Michael speaks — not in fury, which the Archive could survive, but in the formula from Jude 9: 'The Lord rebuke you.' The same words he used against the devil over the body of Moses, now turned, carefully, toward the one he commissioned. He does not strip the office. He does not raise his voice. He simply will not pretend.",
+    "unlocked_by": "Accepting forbidden power three times in your career.",
+    "relevance": "A consequence entry. Past this point Michael's regard is colder, and the Archive logs that your patrons are quieter when your Corruption is high.",
+    "mystery": "He did not say 'I rebuke you.' He has never claimed that right over anyone. The Archive thinks this is the most frightening thing about him."
+  },
+  "raphael-clean": {
+    "title": "Healer's Commendation",
+    "tier": 2,
+    "summary": "1 Enoch 10:7 gives Raphael the order after the binding of Azazel: 'and heal the earth which the angels have corrupted.' When the Witness breaks the First Blade with little corruption taken, Raphael does something he rarely does — he is glad. He says the earth is a fraction cleaner, and that the fraction was the whole point, and that no one will ever measure it but him.",
+    "unlocked_by": "Defeating the First Blade with very low Corruption.",
+    "relevance": "A consequence entry rewarding a clean run. The Archive notes Raphael does not praise strength, only restraint.",
+    "mystery": "He thanks you by the name your mother used, which you have told no one in the Watchtower."
+  },
+  "censer-flail": {
+    "title": "The Censer-Flail of Raphael",
+    "tier": 4,
+    "summary": "A swinging brazier on a chain — part thurible, part weapon — patterned after the censers of priestly service (Leviticus 16:12–13, Numbers 16:46–48, where Aaron runs the incense between the living and the dead to stop a plague). The design is the game's own: a tool of cleansing repurposed as a tool of binding, fitted to a Witness sent where healing and war are the same errand.",
+    "unlocked_by": "Wielding the Censer-Flail.",
+    "relevance": "The second Witness weapon. It trades the Sword's burst for reach, crowd control, and cleanse zones that turn corruption pools into safe ground, and it rewards binding over slaughter.",
+    "mystery": "Aaron stood between the dead and the living, and the plague was stopped. The Archive marks that no one asked him to. He simply ran into the middle."
+  },
+  "hound-mother": {
+    "title": "The Hound-Mother",
+    "tier": 5,
+    "summary": "An elite among the Watcher-forged hounds: larger, older, and surrounded by a pack that moves when she moves. The hounds themselves are a Game-Original extrapolation from the Watchers' teaching of forbidden arts — beasts bred in the forges as the giants' kennel — but the Hound-Mother sharpens the idea: corruption that has learned to raise its young.",
+    "unlocked_by": "Facing the Hound-Mother in the Kennels of Azazel.",
+    "relevance": "An optional elite. Her pack orbits rather than swarms; the Censer-Flail's sweeps and cleanse zones counter her where single-target burst struggles.",
+    "mystery": "She does not fight to kill you. She fights to drive you away from something behind her. There is nothing behind her. The Archive has checked."
+  },
   "final-revelation": {
     "title": "The Final Revelation",
     "tier": 6,

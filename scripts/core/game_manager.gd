@@ -10,18 +10,25 @@ const VERSION := "0.3.1"
 var main: Node = null
 var profile: Dictionary = {}
 var touch_mode := false
+var load_warning := ""
 
 const DEFAULT_PROFILE := {
+	"save_version": SaveManager.CURRENT_SAVE_VERSION,
 	"seals": 0,
 	"codex": ["appointed-witness", "michael", "gabriel"],
 	"aspects": ["commission"],
 	"aspect": "commission",
+	"weapon": "flaming_sword",
+	"weapons_unlocked": ["flaming_sword"],
+	"weapon_aspects": {"flaming_sword": "commission"},
 	"upgrades": {},
 	"boss_defeated": false,
 	"edge_of_azazel": false,
 	"seal_of_michael": false,
 	"michael_disapproves": false,
 	"michael_acknowledged": false,
+	"michael_rebuke_seen": false,
+	"raphael_clean_seen": false,
 	"uriel_unlocked": false,
 	"intro_seen": false,
 	"full_corruption": false,
@@ -31,7 +38,10 @@ const DEFAULT_PROFILE := {
 	"wins": 0,
 	"settings": {
 		"music": 0.8, "sfx": 0.8,
-		"damage_numbers": true, "screenshake": true, "fullscreen": false
+		"damage_numbers": true, "screenshake": true, "fullscreen": false,
+		"screenshake_amount": 1.0, "flash_amount": 1.0, "text_scale": 1.0,
+		"high_contrast": false, "colorblind_telegraphs": false,
+		"hold_to_dash": false, "auto_aim_assist": true
 	}
 }
 
@@ -39,6 +49,9 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_register_inputs()
 	profile = SaveMan.load_profile(DEFAULT_PROFILE)
+	load_warning = SaveMan.last_load_warning
+	if load_warning != "":
+		push_warning("[save] " + load_warning)
 	apply_settings()
 	if DisplayServer.is_touchscreen_available():
 		touch_mode = true

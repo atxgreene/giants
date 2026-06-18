@@ -67,6 +67,32 @@
     {"who": "The Sleeping Dream", "text": "...a tablet pressed under the flood, the ink lifting off like smoke. Three names left legible. Three..."},
     {"who": "The Sleeping Dream", "text": "...the dreamer turns in the sand beneath you. The dreamer has been interpreting, all these centuries, and the interpretation is always judgment..."}
   ],
+  "michael_rebuke": [
+    {"who": "Michael", "text": "Three times now. I counted. It is my office to count."},
+    {"who": "Michael", "text": "I will not curse you, Witness. I have never claimed that right over anyone — not even over the enemy, over the body of Moses, when I had cause. I said then what I say now."},
+    {"who": "Michael", "text": "The Lord rebuke you. Carry the blade I gave you, and remember whose it was first."}
+  ],
+  "rev_seventh_seal": [
+    {"who": "The Opened Chamber", "text": "...not a scroll, this time. Seals set into the earth itself. Seventy of them, one for each generation that must pass before the day..."},
+    {"who": "The Opened Chamber", "text": "...each seal is a place where something was shut, and the key dropped into deep water. You are standing on the lid of one. You have been, the whole walk down..."},
+    {"who": "The Opened Chamber", "text": "...binding is not killing. The bound only wait. Someone agreed to carry the waiting. The chamber wants you to know it was a person, and that the person is still carrying..."}
+  ],
+  "rev_the_measure": [
+    {"who": "The Opened Chamber", "text": "...an angel walks the length of a fallen giant with a measuring reed, the way Ezekiel watched the temple measured, the way the city will be measured at the end..."},
+    {"who": "The Opened Chamber", "text": "...three hundred cubits, says one mouth. Three thousand, says another. The numbers argue over the body and cannot agree, and the measuring continues anyway..."},
+    {"who": "The Opened Chamber", "text": "...the reed is exactly as long as your binding circle. The angel marks where mercy would have to reach to cover the whole length of the dead. It reaches. It is a near thing, but it reaches..."}
+  ],
+  "rev_the_roster_of_watchers": [
+    {"who": "The Opened Chamber", "text": "...a roster, read aloud in the dark. Shemihazah. Asael. Kokabiel. Baraqel. At each name a lamp goes out somewhere in the desert above you..."},
+    {"who": "The Opened Chamber", "text": "...the list is longer than the books recorded. Names you do not know. A faculty, not a mob — every teacher tied to a forbidden lesson, every lesson still being taught..."},
+    {"who": "The Opened Chamber", "text": "...the last name on the roster is read in your own voice. The chamber does not explain this. The chamber has never explained anything. It only opens."}
+  ],
+  "scribe_revelation": [
+    {"who": "The Scribe of Dust", "text": "You have been finding the doors. The ones that are not there until they are. I wondered who would."},
+    {"who": "The Scribe of Dust", "text": "Those chambers are not rewards. They are pages the Archive could not shelve because no one had yet witnessed them. You witness; I shelve. That is the whole arrangement, and it is older than this tower."},
+    {"who": "The Scribe of Dust", "text": "Keep your Revelation high and the desert will keep opening for you. Mind the cost. Sight is not free, and it does not come back out once it is in."},
+    {"who": "The Scribe of Dust", "text": "One door I have never managed to open from this side. You may, someday. When you do, do not call for me. I will already be there. I am always already there."}
+  ],
   "boss_intro": [
     {"who": "Azazel's First Blade", "text": "You call this judgment? I gave mankind the blade. You gave them silence."}
   ],

@@ -14,6 +14,10 @@ func _ready() -> void:
 	menu_box = UIKit.vbox(12)
 	menu_box.alignment = BoxContainer.ALIGNMENT_CENTER
 	menu_box.add_child(UIKit.title("PAUSED", 34))
+	if RunState.active:
+		var seed_line := UIKit.label("%s   ·   Seed: %s" % [RunState.route_name, RunState.seed_display()], 13, UIKit.ASH)
+		seed_line.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		menu_box.add_child(seed_line)
 	menu_box.add_child(UIKit.label(" ", 6))
 	var resume := UIKit.button("Resume", 20)
 	resume.custom_minimum_size = Vector2(280, 0)

@@ -134,8 +134,18 @@ func _talk_uriel() -> void:
 func _talk_scribe() -> void:
 	if float(Game.profile.get("last_corruption", 0.0)) >= 50.0:
 		_say(DataDB.dialogue_lines("scribe_corrupt"))
+	elif _found_hidden_chamber():
+		_say(DataDB.dialogue_lines("scribe_revelation"))
 	else:
 		_say(_one_of("scribe_default"))
+
+func _found_hidden_chamber() -> bool:
+	# Has the Witness opened any hidden Revelation chamber? Unlock the Scribe's
+	# revelation branch once they have.
+	for id in ["seventh-seal", "the-measure", "the-roster-of-watchers"]:
+		if CodexMan.is_unlocked(id):
+			return true
+	return false
 
 # --------------------------------------------------------------- intro
 

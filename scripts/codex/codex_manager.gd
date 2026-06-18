@@ -20,6 +20,8 @@ const TIER_COLORS := {
 	6: Color(0.85, 0.3, 0.4)
 }
 
+var unlocked_this_run := 0
+
 func is_unlocked(id: String) -> bool:
 	return id in Game.profile.get("codex", [])
 
@@ -29,6 +31,8 @@ func unlock(id: String) -> bool:
 	if is_unlocked(id):
 		return false
 	Game.profile["codex"].append(id)
+	if RunState.active:
+		unlocked_this_run += 1
 	Game.save()
 	var title: String = DataDB.codex[id].get("title", id)
 	Game.toast("Archive entry unlocked: " + title, Color(0.45, 0.75, 1.0))

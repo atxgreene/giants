@@ -15,6 +15,7 @@ const REWARD_INFO := {
 	"relic": {"label": "Relic", "color": Color(0.7, 0.5, 0.9)},
 	"weapon": {"label": "Weapon Fire", "color": Color(1.0, 0.55, 0.2)},
 	"forbidden": {"label": "FORBIDDEN KNOWLEDGE", "color": Color(0.85, 0.2, 0.25)},
+	"revelation": {"label": "✶ A HIDDEN DOOR ✶", "color": Color(0.45, 0.85, 1.0)},
 	"advance": {"label": "Onward", "color": Color(0.8, 0.8, 0.8)},
 	"miniboss": {"label": "The Grave of the Half-Buried", "color": Color(0.85, 0.6, 0.35)},
 	"boss": {"label": "The First Forge", "color": Color(0.9, 0.3, 0.2)},

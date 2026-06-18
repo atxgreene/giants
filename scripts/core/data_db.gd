@@ -10,6 +10,7 @@ var rooms: Dictionary = {}
 var upgrades: Dictionary = {}
 var codex: Dictionary = {}
 var dialogue: Dictionary = {}
+var run_routes: Dictionary = {}
 
 func _ready() -> void:
 	weapons = _load_json("res://data/weapons.json")
@@ -19,6 +20,7 @@ func _ready() -> void:
 	upgrades = _load_json("res://data/upgrades.json")
 	codex = _load_json("res://data/codex_entries.json")
 	dialogue = _load_json("res://data/dialogue.json")
+	run_routes = _load_json("res://data/run_routes.json")
 
 func _load_json(path: String) -> Dictionary:
 	var f := FileAccess.open(path, FileAccess.READ)

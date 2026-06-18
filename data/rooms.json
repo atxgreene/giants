@@ -59,6 +59,44 @@
       "name": "Chamber of the Sleeping Dream", "kind": "vision", "size": [900, 620],
       "props": ["starfall", "starfall", "bones", "crack"], "waves": []
     },
+    "elite_hound_pack": {
+      "name": "The Kennels of Azazel", "kind": "combat", "size": [1300, 820],
+      "props": ["rack", "rack", "bones", "crack", "idol"],
+      "waves": [
+        [{"type": "watcher_hound", "count": 4}],
+        [{"type": "pack_alpha", "count": 1}, {"type": "watcher_hound", "count": 3}]
+      ]
+    },
+    "arena_small_corrupt": {
+      "name": "Scorched Hollow (Defiled)", "kind": "combat", "size": [1000, 680],
+      "props": ["bones", "crack", "crack", "idol", "starfall"], "corrupted": true,
+      "waves": [
+        [{"type": "ash_thrall", "count": 4}, {"type": "watcher_hound", "count": 2}],
+        [{"type": "ash_thrall", "count": 3}, {"type": "star_archer", "count": 2}, {"type": "nephilim_bloodling", "count": 1}]
+      ]
+    },
+    "forge_ambush_corrupt": {
+      "name": "Black Iron Forge (Defiled)", "kind": "combat", "size": [1200, 760],
+      "props": ["forge", "forge", "rack", "rack", "crack", "crack", "idol"], "corrupted": true,
+      "waves": [
+        [{"type": "iron_brute", "count": 1}, {"type": "ash_thrall", "count": 3}, {"type": "watcher_hound", "count": 2}],
+        [{"type": "watcher_hound", "count": 4}, {"type": "star_archer", "count": 1}],
+        [{"type": "smith_priest", "count": 1}, {"type": "ash_thrall", "count": 2}]
+      ]
+    },
+    "bone_corridor_corrupt": {
+      "name": "Corridor of Sleeping Bones (Defiled)", "kind": "combat", "size": [1750, 540],
+      "props": ["bones", "bones", "bones", "crack", "crack", "starfall"], "corrupted": true,
+      "waves": [
+        [{"type": "nephilim_bloodling", "count": 2}, {"type": "ash_thrall", "count": 3}],
+        [{"type": "bound_giant_spirit", "count": 2}, {"type": "star_archer", "count": 2}],
+        [{"type": "bound_giant_spirit", "count": 1}, {"type": "nephilim_bloodling", "count": 2}, {"type": "watcher_hound", "count": 2}]
+      ]
+    },
+    "revelation_chamber": {
+      "name": "The Opened Chamber", "kind": "vision", "size": [960, 660],
+      "props": ["starfall", "starfall", "starfall", "altar_broken"], "revelation": true, "waves": []
+    },
     "miniboss_arena": {
       "name": "Grave of the Half-Buried", "kind": "miniboss", "size": [1500, 900],
       "props": ["bones", "bones", "crack", "crack"], "waves": []

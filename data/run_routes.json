@@ -1,0 +1,67 @@
+{
+  "version": 1,
+  "_comment": "Data-driven run graph for the Run Director. The old fixed sequence is now the 'pilgrimage' fallback route. Slot indices 1-5 are variable; 0=start, 6=miniboss, 7=pre-boss combat, 8=boss are locked.",
+  "structure": {
+    "length": 9,
+    "miniboss_index": 6,
+    "pre_boss_combat_index": 7,
+    "boss_index": 8,
+    "variable_slots": [1, 2, 3, 4, 5]
+  },
+  "categories": {
+    "combat": ["arena_small", "arena_wide", "forge_ambush", "bone_corridor"],
+    "elite": ["elite_forge", "elite_hound_pack"],
+    "shrine": ["relic_shrine"],
+    "vision": ["vision_room"]
+  },
+  "corrupt_variants": {
+    "arena_small": "arena_small_corrupt",
+    "forge_ambush": "forge_ambush_corrupt",
+    "bone_corridor": "bone_corridor_corrupt"
+  },
+  "revelation_room": "revelation_chamber",
+  "revelation_events": ["seventh-seal", "the-measure", "the-roster-of-watchers"],
+  "default_route": "pilgrimage",
+  "routes": {
+    "pilgrimage": {
+      "name": "The Pilgrim Road",
+      "gate_label": "THE PILGRIM ROAD — the old path through the desert, as the first witnesses walked it.",
+      "color": "#e8d8a8",
+      "slot_weights": {"combat": 5, "elite": 2, "shrine": 2, "vision": 2},
+      "reward_weights": {"blessing": 4, "currency": 2, "heal": 2, "codex": 2, "relic": 2, "weapon": 1, "forbidden": 1},
+      "blessing_bias": {"michael": 1, "gabriel": 1, "raphael": 1, "uriel": 1},
+      "enemy_bonus": 0.0,
+      "min_elite": 1
+    },
+    "judgment": {
+      "name": "The Route of Judgment",
+      "gate_label": "JUDGMENT — the iron road. More of the fallen wait here, and Michael marks the worthy.",
+      "color": "#e8c87a",
+      "slot_weights": {"combat": 5, "elite": 5, "shrine": 1, "vision": 2},
+      "reward_weights": {"blessing": 4, "currency": 2, "heal": 1, "codex": 2, "relic": 2, "weapon": 3, "forbidden": 1},
+      "blessing_bias": {"michael": 3, "gabriel": 2, "raphael": 1, "uriel": 2},
+      "enemy_bonus": 0.05,
+      "min_elite": 2
+    },
+    "mercy": {
+      "name": "The Route of Mercy",
+      "gate_label": "MERCY — the quiet road. Fountains, shrines, and the binding of the bound. Raphael walks here.",
+      "color": "#7fd49a",
+      "slot_weights": {"combat": 4, "elite": 1, "shrine": 4, "vision": 3},
+      "reward_weights": {"blessing": 4, "currency": 1, "heal": 4, "codex": 2, "relic": 2, "weapon": 1, "forbidden": 0},
+      "blessing_bias": {"michael": 1, "gabriel": 2, "raphael": 4, "uriel": 1},
+      "enemy_bonus": -0.05,
+      "min_elite": 0
+    },
+    "temptation": {
+      "name": "The Route of Temptation",
+      "gate_label": "TEMPTATION — the bright-burning road. Forbidden gates open easily, and the desert grows teeth as you go.",
+      "color": "#c8324a",
+      "slot_weights": {"combat": 4, "elite": 4, "shrine": 1, "vision": 2},
+      "reward_weights": {"blessing": 3, "currency": 2, "heal": 1, "codex": 2, "relic": 2, "weapon": 2, "forbidden": 5},
+      "blessing_bias": {"michael": 2, "gabriel": 2, "raphael": 1, "uriel": 2},
+      "enemy_bonus": 0.15,
+      "min_elite": 1
+    }
+  }
+}

@@ -29,6 +29,11 @@
     "shape": "hound", "color": "#5d8a52", "attack_range": 220,
     "windup": 0.45, "recover": 0.50, "cd": 1.2, "hit_radius": 14, "seals": 0
   },
+  "pack_alpha": {
+    "name": "The Hound-Mother", "hp": 180, "speed": 215, "dmg": 11, "poise": 70,
+    "shape": "hound", "color": "#7fb05a", "attack_range": 240, "elite": true,
+    "windup": 0.42, "recover": 0.55, "cd": 1.0, "hit_radius": 20, "seals": 7
+  },
   "smith_priest": {
     "name": "Azazel's Smith-Priest", "hp": 230, "speed": 95, "dmg": 13, "poise": 120,
     "shape": "priest", "color": "#caa14a", "attack_range": 320, "elite": true,
