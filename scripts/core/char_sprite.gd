@@ -1,29 +1,43 @@
 extends Sprite2D
 class_name CharSprite
-## Plays a sprite-sheet animation for a character described by
-## assets/sprites/<character>.json (see assets/sprites/README.md). One animation
-## per sheet row, frames left-to-right. Drives state-based playback (idle/walk/
-## attack/windup/hurt/death/special) with graceful fallbacks.
+## Plays a character defined by assets/sprites/<id>.json against the shared
+## sprite-sheet contract:
 ##
-## Normal-map lighting: if a sibling sheet "<sheet>_n.png" exists, it is wired
-## through a CanvasTexture so the project's Light2D pools light the sprite in
-## 3D relief — the core HD-2D effect.
+## {
+##   "sheet": "x.png", "normal": "x_n.png",        # normal optional
+##   "frame_size": [160,160],                       # contract hint
+##   "grid": {"cols": 8, "rows": 7},                # the real atlas grid
+##   "fps": 12, "offset": [0,-80], "pivot": "bottom_center",
+##   "scale": 0.42,                                 # engine display scale
+##   "animations": {
+##     "idle":  {"row":0, "indices":[0],       "mode":"pose",     "loop":true},
+##     "walk":  {"row":1, "indices":[3],       "mode":"pose",     "loop":true},
+##     "attack":{"row":2, "indices":[2,3,4],   "mode":"sequence", "loop":false},
+##     "death": {"row":5, "indices":[0,1,2,3,4,5,6,7], "mode":"sequence", "loop":false}
+##   }
+## }
 ##
-## try_make() returns null when no sheet exists, so Player/EnemyBase keep their
-## procedural rendering. Nothing here is required to run the game.
+## - "pose" rows hold a single chosen frame (the AI sheets aren't frame-coherent
+##   enough to play whole rows); "sequence" rows step through the hand-picked
+##   `indices` only.
+## - Cell size is derived from `grid` × the actual texture so it stays accurate
+##   even if the export isn't exactly frame_size.
+## - Optional `<sheet>_n.png` normal map → lit 3D relief under Light2D. If the
+##   diffuse has no alpha, set "chroma_key": true (keys the flat background;
+##   renders flat-lit until a transparent sheet replaces it).
+##
+## try_make() returns null when no config exists, so callers fall back to the
+## procedural body. Nothing here is required to run the game.
 
 var cfg: Dictionary = {}
 var fw := 64.0
 var fh := 64.0
 var fps := 12.0
-var sheet_w := 0.0
-var sheet_h := 0.0
-var rows := 0          # >0 → per-row layout: each row's frames fill the width
 var anims: Dictionary = {}
 var cur := ""
-var frame_i := 0
+var frame_i := 0      # index into the current animation's `indices`
 var frame_t := 0.0
-var done := false      # non-looping anim finished (e.g. death holds last frame)
+var done := false
 
 static func try_make(character: String) -> CharSprite:
 	if not Assets.has_character_sprites(character):
@@ -41,26 +55,43 @@ func _setup(character: String) -> bool:
 		return false
 	fps = float(cfg.get("fps", 12))
 	anims = cfg.get("animations", {})
-	sheet_w = float(diffuse.get_width())
-	sheet_h = float(diffuse.get_height())
-	# Per-row layout: each row holds one animation whose frames fill the full
-	# sheet width (so a 6-frame row and a 7-frame row have different cell
-	# widths). This is how the AI sheets are packed, and avoids the horizontal
-	# "slide" you get from assuming a single uniform column pitch.
-	rows = int(cfg.get("rows", 0))
-	if rows > 0:
-		fh = sheet_h / float(rows)
-		fw = sheet_w  # per-frame width is computed per animation in _apply()
-	else:
-		var fsz: Array = cfg.get("frame_size", [64, 64])
+	var sheet_w := float(diffuse.get_width())
+	var sheet_h := float(diffuse.get_height())
+	# Cell size: prefer the atlas grid (derived from the real texture so it is
+	# pixel-accurate); fall back to an explicit frame_size; else a single cell.
+	var grid: Dictionary = cfg.get("grid", {})
+	if grid.has("cols") and grid.has("rows"):
+		fw = sheet_w / float(maxi(int(grid["cols"]), 1))
+		fh = sheet_h / float(maxi(int(grid["rows"]), 1))
+	elif cfg.has("frame_size"):
+		var fsz: Array = cfg["frame_size"]
 		fw = float(fsz[0])
 		fh = float(fsz[1])
-	var base := str(cfg.get("sheet", character + ".png")).get_basename()
-	var norm: Texture2D = Assets.texture(Assets.SPRITE_DIR + base + "_n.png")
+	else:
+		fw = sheet_w
+		fh = sheet_h
+	_setup_texture(diffuse, character)
+	region_enabled = true
+	centered = true
+	# Pivot → where the node origin sits on the cell. bottom_center puts feet
+	# at the origin; an explicit "offset" overrides.
+	var off_y := -fh / 2.0 if str(cfg.get("pivot", "bottom_center")) == "bottom_center" else 0.0
+	if cfg.has("offset"):
+		var off: Array = cfg["offset"]
+		offset = Vector2(float(off[0]), float(off[1]))
+	else:
+		offset = Vector2(0, off_y)
+	var s := float(cfg.get("scale", 1.0))
+	scale = Vector2(s, s)
+	play("idle")
+	return true
+
+func _setup_texture(diffuse: Texture2D, character: String) -> void:
+	var norm_name := str(cfg.get("normal", str(cfg.get("sheet", character + ".png")).get_basename() + "_n.png"))
+	var norm: Texture2D = Assets.texture(Assets.SPRITE_DIR + norm_name)
 	if bool(cfg.get("chroma_key", false)):
-		# The sheet has no alpha (flat background): key out the desaturated
-		# background in a shader, sparing the saturated gold/blue/fire pixels.
-		# (A transparent re-export looks better and restores normal-map relief.)
+		# Flat-background sheet: key the desaturated background in-shader. Renders
+		# flat-lit (no normal relief) — a transparent re-export restores that.
 		texture = diffuse
 		var mat := ShaderMaterial.new()
 		var sh := Shader.new()
@@ -70,23 +101,12 @@ func _setup(character: String) -> bool:
 		mat.set_shader_parameter("sat_max", float(cfg.get("chroma_sat", 0.13)))
 		material = mat
 	elif norm != null:
-		# Optional normal map for lit 3D-relief shading under Light2D.
 		var ct := CanvasTexture.new()
 		ct.diffuse_texture = diffuse
 		ct.normal_texture = norm
 		texture = ct
 	else:
 		texture = diffuse
-	region_enabled = true
-	centered = true
-	# Feet at the node origin by default; override with "offset":[x,y] in config.
-	var off: Array = cfg.get("offset", [0, -fh / 2.0])
-	offset = Vector2(float(off[0]), float(off[1]))
-	# Display scale: art is authored larger than the ~64px gameplay scale.
-	var s := float(cfg.get("scale", 1.0))
-	scale = Vector2(s, s)
-	play("idle")
-	return true
 
 func play(anim_name: String) -> void:
 	if anim_name == cur:
@@ -117,37 +137,41 @@ func _fallback(anim_name: String) -> String:
 		_:
 			return "idle"
 
+func _frame_count() -> int:
+	var a: Dictionary = anims[cur]
+	if a.has("indices"):
+		return (a["indices"] as Array).size()
+	return int(a.get("frames", 1))
+
 func _process(delta: float) -> void:
 	if cur == "" or done:
 		return
 	var a: Dictionary = anims[cur]
-	var frames := int(a.get("frames", 1))
-	if frames <= 1:
+	if str(a.get("mode", "sequence")) == "pose":
+		return
+	var count := _frame_count()
+	if count <= 1:
 		return
 	frame_t += delta
 	if frame_t >= 1.0 / maxf(fps, 1.0):
 		frame_t = 0.0
 		frame_i += 1
-		if frame_i >= frames:
+		if frame_i >= count:
 			if bool(a.get("loop", true)):
 				frame_i = 0
 			else:
-				frame_i = frames - 1
+				frame_i = count - 1
 				done = true
 		_apply()
 
 func _apply() -> void:
 	var a: Dictionary = anims[cur]
 	var row := int(a.get("row", 0))
-	if rows > 0:
-		# Cell width = full sheet width / the row's true column count ("cols").
-		# "frames" is how many of those columns to actually play, so a pose can
-		# be held as a single clean frame without resizing the crop.
-		var cols := maxi(int(a.get("cols", a.get("frames", 1))), 1)
-		var cw := sheet_w / float(cols)
-		region_rect = Rect2(frame_i * cw, row * fh, cw, fh)
-	else:
-		region_rect = Rect2(frame_i * fw, row * fh, fw, fh)
+	var col := frame_i
+	if a.has("indices"):
+		var idx: Array = a["indices"]
+		col = int(idx[clampi(frame_i, 0, idx.size() - 1)])
+	region_rect = Rect2(col * fw, row * fh, fw, fh)
 
 const CHROMA_SHADER := "\
 shader_type canvas_item;\n\

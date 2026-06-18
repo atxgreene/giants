@@ -8,33 +8,61 @@ path. Drop final art here and characters can migrate to sprites one at a time
 without changing any combat code — if an asset is missing, the renderer keeps
 drawing procedurally.
 
-## Per-character sprite sheets
+## Asset contract (the format `CharSprite` reads)
 
-1. Drop a sprite sheet, e.g. `witness.png` (a fixed grid: one animation per
-   row, frames left-to-right).
-2. Add a config `witness.json` next to it:
+One sheet on a **uniform `grid` (cols × rows)**, one row per state. Each
+animation names its `row`, an `indices` list of columns to use, and a `mode`:
+
+- `mode: "pose"` — hold one frame (`indices[0]`). Use this for `idle`, `walk`,
+  `windup`, `hurt`, `special`. (AI sheets are distinct poses, not coherent
+  in-betweens, so playing whole rows flickers — pose-swap reads as intentional.)
+- `mode: "sequence"` — step through the listed `indices` only. Use for the
+  genuinely sequential rows: `attack` (best 3–5 frame slash) and `death`.
 
 ```json
 {
   "sheet": "witness.png",
-  "frame_size": [64, 64],
+  "normal": "witness_n.png",
+  "frame_size": [160, 160],
+  "grid": { "cols": 8, "rows": 7 },
   "fps": 12,
+  "offset": [0, -84],
+  "pivot": "bottom_center",
+  "scale": 0.42,
   "animations": {
-    "idle":    {"row": 0, "frames": 4, "loop": true},
-    "walk":    {"row": 1, "frames": 6, "loop": true},
-    "attack":  {"row": 2, "frames": 5, "loop": false},
-    "windup":  {"row": 3, "frames": 3, "loop": false},
-    "hurt":    {"row": 4, "frames": 2, "loop": false},
-    "death":   {"row": 5, "frames": 6, "loop": false},
-    "special": {"row": 6, "frames": 5, "loop": false}
+    "idle":   { "row": 0, "indices": [0],                "mode": "pose",     "loop": true },
+    "walk":   { "row": 1, "indices": [3],                "mode": "pose",     "loop": true },
+    "attack": { "row": 2, "indices": [2, 3, 4],          "mode": "sequence", "loop": false },
+    "windup": { "row": 3, "indices": [1],                "mode": "pose",     "loop": false },
+    "hurt":   { "row": 4, "indices": [1],                "mode": "pose",     "loop": false },
+    "death":  { "row": 5, "indices": [0,1,2,3,4,5,6,7],  "mode": "sequence", "loop": false },
+    "special":{ "row": 6, "indices": [3],                "mode": "pose",     "loop": false }
   }
 }
 ```
 
-Required animation rows: `idle`, `walk`, `attack`, `windup`, `hurt`,
-`death`. Optional: `charge` (held heavy) and any `special`. Missing rows fall
-back gracefully (e.g. `walk`→`idle`, `windup`→`attack`, `death`→`hurt`), so a
-minimal sheet with just `idle`/`attack`/`death` already works.
+Notes:
+- **Cell size** is derived from `grid` × the actual texture (so an export that
+  lands at 1341×1173 on an 8×7 grid still crops accurately at ~167px). `frame_size`
+  is the intended/contract value; `grid` wins for cropping.
+- **`scale`** is an engine display scale (art is authored larger than the ~64px
+  gameplay scale); **`pivot: "bottom_center"`** puts feet at the origin, with
+  `offset` as the explicit nudge.
+- Required rows: `idle`, `walk`, `attack`, `windup`, `hurt`, `death`. Optional:
+  `charge` (held heavy), `special`. Missing rows fall back
+  (`walk`→`idle`, `windup`/`charge`→`attack`, `death`→`hurt`).
+
+### Generating sheets that animate well
+Don't ask the model for one giant seven-row multi-action sheet when you want
+smooth motion — it won't be frame-coherent. Generate **one action at a time**,
+then assemble into the atlas above:
+1. `idle` — 4-frame breathing loop
+2. `walk` — 8-frame true walk cycle
+3. `attack` — 4–6-frame swing
+4. `death` — 6–8-frame collapse
+
+With coherent per-action frames you can switch those rows from `pose` to
+`sequence` and they'll play as real animation.
 
 **This is now live.** `Player` and `EnemyBase` call `CharSprite.try_make(id)`
 at spawn: if a config exists the sheet renders (and is state-driven —

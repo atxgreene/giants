@@ -1,20 +1,23 @@
 {
   "sheet": "witness.png",
-  "rows": 7,
-  "scale": 0.42,
+  "normal": "witness_n.png",
+  "frame_size": [160, 160],
+  "grid": { "cols": 8, "rows": 7 },
+  "fps": 12,
   "offset": [0, -84],
-  "fps": 9,
+  "pivot": "bottom_center",
+  "scale": 0.42,
   "chroma_key": true,
   "chroma_luma": 0.80,
   "chroma_sat": 0.13,
   "animations": {
-    "idle":    {"row": 0, "cols": 6, "frames": 1, "loop": false},
-    "walk":    {"row": 1, "cols": 7, "frames": 1, "loop": false},
-    "attack":  {"row": 2, "cols": 5, "frames": 3, "loop": false},
-    "windup":  {"row": 3, "cols": 4, "frames": 1, "loop": false},
-    "hurt":    {"row": 4, "cols": 3, "frames": 1, "loop": false},
-    "death":   {"row": 5, "cols": 7, "frames": 6, "loop": false},
-    "charge":  {"row": 3, "cols": 4, "frames": 1, "loop": false},
-    "special": {"row": 6, "cols": 5, "frames": 1, "loop": false}
+    "idle":    { "row": 0, "cols": 6, "frames": 1, "indices": [0], "loop": true,  "mode": "pose" },
+    "walk":    { "row": 1, "cols": 8, "frames": 1, "indices": [3], "loop": true,  "mode": "pose" },
+    "attack":  { "row": 2, "cols": 6, "frames": 3, "indices": [2, 3, 4], "loop": false, "mode": "sequence" },
+    "windup":  { "row": 3, "cols": 4, "frames": 1, "indices": [1], "loop": false, "mode": "pose" },
+    "hurt":    { "row": 4, "cols": 3, "frames": 1, "indices": [1], "loop": false, "mode": "pose" },
+    "death":   { "row": 5, "cols": 8, "frames": 8, "indices": [0, 1, 2, 3, 4, 5, 6, 7], "loop": false, "mode": "sequence" },
+    "charge":  { "row": 3, "cols": 4, "frames": 1, "indices": [1], "loop": false, "mode": "pose" },
+    "special": { "row": 6, "cols": 6, "frames": 1, "indices": [3], "loop": false, "mode": "pose" }
   }
 }
