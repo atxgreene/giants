@@ -1,6 +1,6 @@
 {
   "sheet": "witness.png",
-  "frame_size": [191.57, 167.57],
+  "rows": 7,
   "scale": 0.42,
   "offset": [0, -84],
   "fps": 10,

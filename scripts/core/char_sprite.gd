@@ -16,6 +16,9 @@ var cfg: Dictionary = {}
 var fw := 64.0
 var fh := 64.0
 var fps := 12.0
+var sheet_w := 0.0
+var sheet_h := 0.0
+var rows := 0          # >0 → per-row layout: each row's frames fill the width
 var anims: Dictionary = {}
 var cur := ""
 var frame_i := 0
@@ -36,11 +39,22 @@ func _setup(character: String) -> bool:
 	var diffuse: Texture2D = Assets.sheet_texture(character)
 	if diffuse == null:
 		return false
-	var fsz: Array = cfg.get("frame_size", [64, 64])
-	fw = float(fsz[0])
-	fh = float(fsz[1])
 	fps = float(cfg.get("fps", 12))
 	anims = cfg.get("animations", {})
+	sheet_w = float(diffuse.get_width())
+	sheet_h = float(diffuse.get_height())
+	# Per-row layout: each row holds one animation whose frames fill the full
+	# sheet width (so a 6-frame row and a 7-frame row have different cell
+	# widths). This is how the AI sheets are packed, and avoids the horizontal
+	# "slide" you get from assuming a single uniform column pitch.
+	rows = int(cfg.get("rows", 0))
+	if rows > 0:
+		fh = sheet_h / float(rows)
+		fw = sheet_w  # per-frame width is computed per animation in _apply()
+	else:
+		var fsz: Array = cfg.get("frame_size", [64, 64])
+		fw = float(fsz[0])
+		fh = float(fsz[1])
 	var base := str(cfg.get("sheet", character + ".png")).get_basename()
 	var norm: Texture2D = Assets.texture(Assets.SPRITE_DIR + base + "_n.png")
 	if bool(cfg.get("chroma_key", false)):
@@ -125,7 +139,13 @@ func _process(delta: float) -> void:
 func _apply() -> void:
 	var a: Dictionary = anims[cur]
 	var row := int(a.get("row", 0))
-	region_rect = Rect2(frame_i * fw, row * fh, fw, fh)
+	if rows > 0:
+		# Cell width = full sheet width / frames in this row.
+		var n := maxi(int(a.get("frames", 1)), 1)
+		var cw := sheet_w / float(n)
+		region_rect = Rect2(frame_i * cw, row * fh, cw, fh)
+	else:
+		region_rect = Rect2(frame_i * fw, row * fh, fw, fh)
 
 const CHROMA_SHADER := "\
 shader_type canvas_item;\n\

@@ -46,6 +46,9 @@ func generate(seed_input: int = 0, route_input := "") -> void:
 	route = routes.get(route_id, {})
 	_build_nodes()
 	_build_gates()
+	# Safety net: a malformed route/structure must never yield an empty plan.
+	if nodes.is_empty():
+		_fallback_plan()
 
 func _make_seed() -> int:
 	var r := RandomNumberGenerator.new()

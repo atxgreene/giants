@@ -40,8 +40,15 @@ func _ready() -> void:
 
 func build(t_id: String) -> void:
 	template_id = t_id
-	template = DataDB.rooms["templates"][t_id]
-	kind = str(template["kind"])
+	var templates: Dictionary = DataDB.rooms.get("templates", {})
+	template = templates.get(t_id, {})
+	if template.is_empty():
+		# Never let a bad/unknown id collapse the room (null name, zero bounds,
+		# broken camera). Fall back to a valid arena.
+		push_warning("Unknown room template '%s' — falling back to arena_small" % t_id)
+		template_id = "arena_small"
+		template = templates.get("arena_small", {})
+	kind = str(template.get("kind", "combat"))
 	var size: Array = template["size"]
 	bounds = Rect2(-float(size[0]) * 0.5, -float(size[1]) * 0.5, float(size[0]), float(size[1]))
 	var floor_node := FloorLayer.new()
