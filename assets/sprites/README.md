@@ -52,6 +52,25 @@ Notes:
   `charge` (held heavy), `special`. Missing rows fall back
   (`walk`→`idle`, `windup`/`charge`→`attack`, `death`→`hurt`).
 
+### Clean runtime atlas (avoid fractional crops)
+Runtime cropping must use an **exact-grid** atlas, or fractional cells bleed
+neighbour pixels during movement. If a generated sheet isn't power-of-two/exact
+(e.g. the Witness came out 1341×1173), repack it:
+
+```
+python3 scripts/tools/repack_atlas.py   # witness.png[+_n] -> *_clean.png (1280x1120, 160px cells, true alpha)
+```
+
+The repacker resamples to an exact grid and keys the flat background to real
+alpha (so `chroma_key` can be off and the normal map lights the sprite). Point
+the manifest at the `*_clean.png` / `*_clean_n.png` outputs.
+
+### Verifying the live web build
+CI stamps `assets/build_info.json` with the commit SHA on each deploy; the main
+menu shows it (`v0.4.0 · build <sha>`). If the menu SHA doesn't match the latest
+commit, the browser is on a cached build — hard-refresh. (The web export's PWA
+service worker is disabled, so a hard refresh always pulls fresh.)
+
 ### Generating sheets that animate well
 Don't ask the model for one giant seven-row multi-action sheet when you want
 smooth motion — it won't be frame-coherent. Generate **one action at a time**,

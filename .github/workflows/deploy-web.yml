@@ -32,6 +32,12 @@ jobs:
           mkdir -p ~/.local/share/godot/export_templates
           ln -sfn /root/.local/share/godot/export_templates/4.3.stable ~/.local/share/godot/export_templates/4.3.stable
 
+      - name: Stamp build version (lets the menu show which build is live)
+        run: |
+          mkdir -p assets
+          printf '{"sha":"%s","ref":"%s"}' "${GITHUB_SHA:0:7}" "${GITHUB_REF_NAME}" > assets/build_info.json
+          cat assets/build_info.json
+
       - name: Import assets (fails on parse/compile errors)
         run: godot --headless --import
 

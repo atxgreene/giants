@@ -63,12 +63,23 @@ func _ready() -> void:
 	v.add_child(controls)
 	menu_panel.add_child(v)
 	root.add_child(menu_panel)
-	var ver := UIKit.label("v" + Game.VERSION + " — vertical slice", 12, UIKit.ASH)
+	var ver := UIKit.label("v" + Game.VERSION + _build_tag() + " — vertical slice", 12, UIKit.ASH)
 	ver.set_anchors_preset(Control.PRESET_BOTTOM_RIGHT)
 	ver.position = Vector2(-190, -30)
 	add_child(ver)
 	new_game.grab_focus()
 	AudioMan.music("hub")
+
+func _build_tag() -> String:
+	# Per-deploy build stamp (written by CI) so you can tell at a glance whether
+	# the browser loaded the latest build or a cached one.
+	var path := "res://assets/build_info.json"
+	if not FileAccess.file_exists(path):
+		return ""
+	var parsed = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if parsed is Dictionary and parsed.has("sha"):
+		return " · build " + str(parsed["sha"])
+	return ""
 
 func _menu_btn(text: String) -> Button:
 	var b := UIKit.button(text, 20)
