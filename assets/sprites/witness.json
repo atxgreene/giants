@@ -3,18 +3,18 @@
   "rows": 7,
   "scale": 0.42,
   "offset": [0, -84],
-  "fps": 10,
+  "fps": 9,
   "chroma_key": true,
   "chroma_luma": 0.80,
   "chroma_sat": 0.13,
   "animations": {
-    "idle":    {"row": 0, "frames": 6, "loop": true},
-    "walk":    {"row": 1, "frames": 7, "loop": true},
-    "attack":  {"row": 2, "frames": 5, "loop": false},
-    "windup":  {"row": 3, "frames": 4, "loop": false},
-    "hurt":    {"row": 4, "frames": 3, "loop": false},
-    "death":   {"row": 5, "frames": 7, "loop": false},
-    "charge":  {"row": 6, "frames": 5, "loop": false},
-    "special": {"row": 6, "frames": 5, "loop": false}
+    "idle":    {"row": 0, "cols": 6, "frames": 1, "loop": false},
+    "walk":    {"row": 1, "cols": 7, "frames": 1, "loop": false},
+    "attack":  {"row": 2, "cols": 5, "frames": 3, "loop": false},
+    "windup":  {"row": 3, "cols": 4, "frames": 1, "loop": false},
+    "hurt":    {"row": 4, "cols": 3, "frames": 1, "loop": false},
+    "death":   {"row": 5, "cols": 7, "frames": 6, "loop": false},
+    "charge":  {"row": 3, "cols": 4, "frames": 1, "loop": false},
+    "special": {"row": 6, "cols": 5, "frames": 1, "loop": false}
   }
 }

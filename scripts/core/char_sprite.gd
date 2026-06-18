@@ -140,9 +140,11 @@ func _apply() -> void:
 	var a: Dictionary = anims[cur]
 	var row := int(a.get("row", 0))
 	if rows > 0:
-		# Cell width = full sheet width / frames in this row.
-		var n := maxi(int(a.get("frames", 1)), 1)
-		var cw := sheet_w / float(n)
+		# Cell width = full sheet width / the row's true column count ("cols").
+		# "frames" is how many of those columns to actually play, so a pose can
+		# be held as a single clean frame without resizing the crop.
+		var cols := maxi(int(a.get("cols", a.get("frames", 1))), 1)
+		var cw := sheet_w / float(cols)
 		region_rect = Rect2(frame_i * cw, row * fh, cw, fh)
 	else:
 		region_rect = Rect2(frame_i * fw, row * fh, fw, fh)
