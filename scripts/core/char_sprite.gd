@@ -73,6 +73,10 @@ func _setup(character: String) -> bool:
 	_setup_texture(diffuse, character)
 	region_enabled = true
 	centered = true
+	# Nearest filter so fractional cell sizes (e.g. 1341/8 = 167.6) can't bleed
+	# pixels between adjacent columns while moving. A clean power-of-two atlas
+	# (1280x1120, 160px cells, alpha) avoids the fractional crop entirely.
+	texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
 	# Pivot → where the node origin sits on the cell. bottom_center puts feet
 	# at the origin; an explicit "offset" overrides.
 	var off_y := -fh / 2.0 if str(cfg.get("pivot", "bottom_center")) == "bottom_center" else 0.0
@@ -167,11 +171,23 @@ func _process(delta: float) -> void:
 func _apply() -> void:
 	var a: Dictionary = anims[cur]
 	var row := int(a.get("row", 0))
-	var col := frame_i
+	var col := _current_col()
+	region_rect = Rect2(col * fw, row * fh, fw, fh)
+
+func _current_col() -> int:
+	var a: Dictionary = anims[cur]
 	if a.has("indices"):
 		var idx: Array = a["indices"]
-		col = int(idx[clampi(frame_i, 0, idx.size() - 1)])
-	region_rect = Rect2(col * fw, row * fh, fw, fh)
+		return int(idx[clampi(frame_i, 0, idx.size() - 1)])
+	return frame_i
+
+## Live readout for the F3 combat debug overlay.
+func debug_string() -> String:
+	if cur == "":
+		return "spr: -"
+	var a: Dictionary = anims[cur]
+	return "spr:%s mode:%s row:%d col:%d" % [
+		cur, str(a.get("mode", "sequence")), int(a.get("row", 0)), _current_col()]
 
 const CHROMA_SHADER := "\
 shader_type canvas_item;\n\

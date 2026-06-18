@@ -683,7 +683,11 @@ func _draw_censer(hand: Vector2) -> void:
 		draw_circle(ep, 1.2, Color(0.7, 0.92, 1.0, 0.4))
 
 func _draw() -> void:
-	Painter.shadow(self, 13.0, 1.8, 0.34)
+	# A firmer contact shadow grounds the sprite to the floor.
+	if sprite != null:
+		Painter.shadow(self, 16.0, 1.9, 0.42)
+	else:
+		Painter.shadow(self, 13.0, 1.8, 0.34)
 	if sprite != null:
 		# Production sprite renders the body; keep the motion trail, ult aura,
 		# and debug overlay drawn here.
@@ -821,3 +825,5 @@ func _draw_debug() -> void:
 		var info := "state:%s/%s  buf:%s  chg:%.2f  iframes:%.2f  ult:%d" % [
 			state, atk_phase, ",".join(input_buf.keys()), charge_t, iframes, int(ult_charge)]
 		draw_string(font, Vector2(-90, -56), info, HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(0.7, 1.0, 0.7))
+		if sprite != null:
+			draw_string(font, Vector2(-90, -46), sprite.debug_string(), HORIZONTAL_ALIGNMENT_LEFT, -1, 9, Color(0.7, 1.0, 0.7))

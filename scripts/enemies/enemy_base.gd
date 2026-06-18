@@ -397,7 +397,10 @@ func _update_enemy_sprite() -> void:
 
 func _draw() -> void:
 	_draw_telegraph()
-	Painter.shadow(self, hit_radius * 0.95, 1.7, 0.3)
+	if sprite != null:
+		Painter.shadow(self, hit_radius * 1.2, 1.8, 0.4)  # firmer contact shadow under sprites
+	else:
+		Painter.shadow(self, hit_radius * 0.95, 1.7, 0.3)
 	if sprite != null:
 		# Production sprite renders the body; keep telegraph, shadow, elite ring,
 		# and status bars drawn here.

@@ -28,6 +28,8 @@ extends Node
 
 const SPRITE_DIR := "res://assets/sprites/"
 const VFX_DIR := "res://assets/vfx/"
+const PROP_DIR := "res://assets/props/"
+const FLOOR_DIR := "res://assets/floors/"
 
 const VFX_KINDS := ["slash", "holy_fire", "corruption_pool", "revelation_pulse",
 	"binding_seal", "boss_phase_transition"]
@@ -60,6 +62,16 @@ func sheet_texture(character: String) -> Texture2D:
 	if cfg.is_empty():
 		return null
 	return texture(SPRITE_DIR + str(cfg.get("sheet", character + ".png")))
+
+# ---------------------------------------------------------------- props / floors
+
+## Drop-in environment art: assets/props/<kind>.png and assets/floors/<room_kind>.png.
+## Return null when absent so rooms keep drawing procedurally.
+func prop_texture(kind: String) -> Texture2D:
+	return texture(PROP_DIR + kind + ".png")
+
+func floor_texture(room_kind: String) -> Texture2D:
+	return texture(FLOOR_DIR + room_kind + ".png")
 
 # ---------------------------------------------------------------- vfx
 

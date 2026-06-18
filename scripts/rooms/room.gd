@@ -69,6 +69,12 @@ func build(t_id: String) -> void:
 			pass
 
 func _build_environment_lights() -> void:
+	# Animated molten cracks in the floor (desert rooms): motion + danger read.
+	if kind != "hub":
+		var lava := LavaCracks.new()
+		lava.bounds = bounds
+		lava.z_index = -18  # above the floor (-20), below props/actors
+		add_child(lava)
 	# Big fixed light sources so the arena is lit by its own fire/starlight.
 	if not bool(Game.setting("bloom")):
 		return
@@ -513,6 +519,63 @@ class FloorLayer extends Node2D:
 			draw_rect(Rect2(bounds.position.x, bounds.end.y - inset - 10, bounds.size.x, 10), c)
 			draw_rect(Rect2(bounds.position.x + inset, bounds.position.y, 10, bounds.size.y), c)
 			draw_rect(Rect2(bounds.end.x - inset - 10, bounds.position.y, 10, bounds.size.y), c)
+		# North wall casts a soft shadow down onto the floor (walls have height,
+		# light reads from above) — grounds the room.
+		var nsh := 70.0
+		for i in 14:
+			var k := float(i) / 14.0
+			draw_rect(Rect2(bounds.position.x, bounds.position.y + k * nsh, bounds.size.x, nsh / 14.0 + 1.0),
+				Color(0.02, 0.01, 0.03, 0.22 * (1.0 - k)))
+		# Corner occlusion: darken the four corners so the floor reads as a pit.
+		for cpt in [bounds.position, Vector2(bounds.end.x, bounds.position.y),
+				Vector2(bounds.position.x, bounds.end.y), bounds.end]:
+			for r in 3:
+				draw_circle(cpt, 110.0 - float(r) * 30.0, Color(0, 0, 0, 0.05))
+
+class LavaCracks extends Node2D:
+	## A few animated molten fissures across the floor — pulsing glow plus a
+	## bright "flow" highlight travelling along each crack. Only a handful of
+	## cracks, so redrawing every frame is cheap.
+	var bounds := Rect2()
+	var t := 0.0
+	var cracks: Array = []
+
+	func _ready() -> void:
+		var rng := RandomNumberGenerator.new()
+		rng.seed = int(bounds.size.x * 13.0 + bounds.size.y * 7.0)
+		var n := clampi(int(bounds.get_area() / 150000.0), 2, 4)
+		for i in n:
+			var p := Vector2(
+				rng.randf_range(bounds.position.x + 130.0, bounds.end.x - 130.0),
+				rng.randf_range(bounds.position.y + 110.0, bounds.end.y - 110.0))
+			var pts := PackedVector2Array([p])
+			var dir := Vector2.from_angle(rng.randf() * TAU)
+			for seg in rng.randi_range(4, 6):
+				dir = dir.rotated(rng.randf_range(-0.8, 0.8)).normalized()
+				p += dir * rng.randf_range(34.0, 62.0)
+				pts.append(p)
+			cracks.append(pts)
+
+	func _process(delta: float) -> void:
+		t += delta
+		queue_redraw()
+
+	func _draw() -> void:
+		for ci in cracks.size():
+			var pts: PackedVector2Array = cracks[ci]
+			var last := pts.size() - 1
+			if last < 1:
+				continue
+			var pulse := 0.55 + 0.45 * sin(t * 2.0 + float(ci) * 1.7)
+			for i in last:
+				draw_line(pts[i], pts[i + 1], Color(0.05, 0.02, 0.02, 0.85), 7.0)
+				draw_line(pts[i], pts[i + 1], Color(1.0, 0.42, 0.1, 0.5 * pulse), 3.4)
+				draw_line(pts[i], pts[i + 1], Color(1.0, 0.8, 0.4, 0.6 * pulse), 1.3)
+			# travelling molten flow highlight
+			var fpos := fmod(t * 0.5 + float(ci) * 0.3, 1.0) * float(last)
+			var seg := clampi(int(fpos), 0, last - 1)
+			var fp: Vector2 = pts[seg].lerp(pts[seg + 1], fpos - float(seg))
+			draw_circle(fp, 3.5 + 2.0 * pulse, Color(1.0, 0.9, 0.5, 0.7))
 
 class Gate extends Node2D:
 	var reward := "advance"
@@ -601,8 +664,25 @@ class InteractPoint extends Node2D:
 class PropNode extends Node2D:
 	var kind := "bones"
 	var seed_v := 0.0
-
+	var anim_t := 0.0
 	var obstacle_radius := 0.0
+
+	func _process(delta: float) -> void:
+		# Only the forge animates (heat shimmer); others are drawn once.
+		if kind == "forge":
+			anim_t += delta
+			queue_redraw()
+
+	func _draw_heat_shimmer() -> void:
+		# Cheap procedural heat haze rising off the forge — sells the heat
+		# without a screen-space shader.
+		for i in 5:
+			var ph := anim_t * 1.6 + float(i) * 1.3
+			var rise := fmod(anim_t * 26.0 + float(i) * 13.0, 46.0)
+			var x := sin(ph) * 12.0 + (float(i) - 2.0) * 6.0
+			var y := -22.0 - rise
+			var a := 0.10 * (1.0 - rise / 46.0)
+			draw_circle(Vector2(x, y), 5.0 + 2.0 * sin(ph * 1.7), Color(1.0, 0.7, 0.4, a))
 
 	func _ready() -> void:
 		seed_v = randf() * 10.0
@@ -653,6 +733,15 @@ class PropNode extends Node2D:
 	func _draw() -> void:
 		if kind != "crack" and SHADOW_R.has(kind):
 			Painter.shadow(self, SHADOW_R[kind], 2.0, 0.3)
+		# Drop-in prop art (assets/props/<kind>.png) renders instead of the
+		# procedural shape if present — no room-code changes needed to add art.
+		var tex: Texture2D = Assets.prop_texture(kind)
+		if tex != null:
+			var sz := tex.get_size()
+			draw_texture(tex, Vector2(-sz.x * 0.5, -sz.y))  # feet at origin
+			if kind == "forge":
+				_draw_heat_shimmer()
+			return
 		match kind:
 			"bones":
 				var bone := Color(0.85, 0.8, 0.72)
@@ -677,6 +766,7 @@ class PropNode extends Node2D:
 				var ember := Color(1.0, 0.45, 0.12, 0.85)
 				draw_rect(Rect2(-12, -22, 24, 14), ember)
 				draw_rect(Rect2(-8, -19, 16, 8), Color(1.0, 0.75, 0.3, 0.9))
+				_draw_heat_shimmer()
 			"rack":
 				var wood := Color(0.3, 0.2, 0.14)
 				draw_rect(Rect2(-24, -4, 48, 6), wood)
