@@ -15,6 +15,7 @@ const BASE_DASH_CD := 0.95
 
 var weapon: Dictionary = {}
 var weapon_style := "sword"
+var sprite: CharSprite = null    # production art, if a sheet exists; else procedural
 var max_hp := 100.0
 var hp := 100.0
 var dead := false
@@ -83,6 +84,12 @@ func _ready() -> void:
 	if bool(Game.setting("bloom")):
 		var lcol := Color(0.6, 0.8, 1.0) if weapon_style == "censer" else Color(1.0, 0.84, 0.55)
 		add_child(FX.make_key_light(lcol, 0.85, 2.7))
+	# Production art path: render from a sprite sheet if one exists, else fall
+	# back to the procedural Witness in _draw().
+	sprite = CharSprite.try_make("witness")
+	if sprite != null:
+		sprite.z_index = 1
+		add_child(sprite)
 	refresh_stats()
 	if RunState.active and RunState.run_hp > 0.0:
 		hp = minf(RunState.run_hp, max_hp)
@@ -94,6 +101,19 @@ func refresh_stats() -> void:
 	max_hp = 100.0 + RunState.mod("max_hp")
 	hp = minf(hp, max_hp)
 	hp_changed.emit()
+
+func _update_sprite() -> void:
+	sprite.flip_h = facing < 0.0
+	var st := "idle"
+	if state == "attack":
+		st = "windup" if atk_phase == "windup" else ("charge" if atk_phase == "charge" else "attack")
+	elif dashing:
+		st = "dash"
+	elif hurt_flash > 0.18:
+		st = "hurt"
+	elif velocity.length() > 20.0:
+		st = "walk"
+	sprite.play(st)
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo and event.physical_keycode == KEY_F3:
@@ -124,6 +144,8 @@ func _physics_process(delta: float) -> void:
 		_service_buffer()
 	_update_movement(delta)
 	move_and_slide()
+	if sprite != null:
+		_update_sprite()
 	if dashing:
 		ghost_tick -= delta
 		if ghost_tick <= 0.0:
@@ -614,6 +636,8 @@ func _die() -> void:
 	dead = true
 	hp = 0.0
 	hp_changed.emit()
+	if sprite != null:
+		sprite.play("death")
 	AudioMan.play("death")
 	FX.burst(global_position, Color(0.9, 0.8, 0.5), 30, 240.0, 0.8)
 	FX.shake(1.0)
@@ -660,6 +684,21 @@ func _draw_censer(hand: Vector2) -> void:
 
 func _draw() -> void:
 	Painter.shadow(self, 13.0, 1.8, 0.34)
+	if sprite != null:
+		# Production sprite renders the body; keep the motion trail, ult aura,
+		# and debug overlay drawn here.
+		if trail.size() > 1:
+			for i in range(trail.size() - 1):
+				var a1 := to_local(trail[i]["p"])
+				var a2 := to_local(trail[i + 1]["p"])
+				var k := float(trail[i]["t"]) / 0.18
+				draw_line(a1, a2, Color(1.0, 0.75, 0.3, 0.45 * k), 2.0 + 4.0 * k)
+		if not dead and ult_charge >= 100.0:
+			Painter.glow(self, Vector2(0, -14), 30.0, Color(1.0, 0.95, 0.6, 0.3 + 0.1 * sin(anim_t * 6.0)), 3)
+			Painter.rune_ring(self, Vector2(0, -14), 24.0 + sin(anim_t * 6.0) * 2.0, Color(1.0, 0.9, 0.55, 0.5), 6, anim_t * 2.0, 1.2)
+		if debug_overlay:
+			_draw_debug()
+		return
 	if dead:
 		draw_circle(Vector2(0, 4), 10.0, Color(0.4, 0.35, 0.3, 0.6))
 		draw_line(Vector2(-8, 2), Vector2(14, -4), Color(0.6, 0.5, 0.35, 0.7), 2.5)

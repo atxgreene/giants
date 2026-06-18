@@ -43,6 +43,7 @@ var facing := 1.0
 var anim_t := 0.0
 var player: Node2D = null
 var seals_drop := 0
+var sprite: CharSprite = null    # production art, if a sheet exists; else procedural
 
 const SUBCLASS_PATHS := {
 	"ash_thrall": "res://scripts/enemies/ash_thrall.gd",
@@ -90,10 +91,15 @@ func _ready() -> void:
 	sh.radius = minf(hit_radius * 0.8, 18.0)
 	cs.shape = sh
 	add_child(cs)
+	sprite = CharSprite.try_make(id)
+	if sprite != null:
+		add_child(sprite)
 
 func _physics_process(delta: float) -> void:
 	anim_t += delta
 	queue_redraw()
+	if sprite != null and not dead:
+		_update_enemy_sprite()
 	flash_t = maxf(flash_t - delta, 0.0)
 	marked_t = maxf(marked_t - delta, 0.0)
 	buff_t = maxf(buff_t - delta, 0.0)
@@ -334,6 +340,8 @@ func die() -> void:
 		return
 	dead = true
 	telegraph = {}
+	if sprite != null:
+		sprite.play("death")
 	set_deferred("collision_layer", 0)
 	set_deferred("collision_mask", 0)
 	if RunState.active:
@@ -374,9 +382,30 @@ func col(c: Color) -> Color:
 		out = out.lerp(Color(0.95, 0.8, 0.3), 0.25)
 	return out
 
+func _update_enemy_sprite() -> void:
+	sprite.flip_h = facing < 0.0
+	var stt := "idle"
+	if state == "windup":
+		stt = "windup"
+	elif state == "attack":
+		stt = "attack"
+	elif state == "stun" or bound_t > 0.0:
+		stt = "hurt"
+	elif velocity.length() > 16.0:
+		stt = "walk"
+	sprite.play(stt)
+
 func _draw() -> void:
 	_draw_telegraph()
 	Painter.shadow(self, hit_radius * 0.95, 1.7, 0.3)
+	if sprite != null:
+		# Production sprite renders the body; keep telegraph, shadow, elite ring,
+		# and status bars drawn here.
+		if elite and not dead:
+			Painter.rune_ring(self, Vector2.ZERO, hit_radius + 12.0,
+				Color(0.95, 0.8, 0.35, 0.45 + 0.15 * sin(anim_t * 4.0)), 8, anim_t * 1.2, 1.4)
+		_draw_status()
+		return
 	if state == "spawn" and not dead:
 		# rise out of the sand: scale in + dust offset
 		var k := clampf(1.0 - st / 0.45, 0.15, 1.0)

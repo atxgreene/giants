@@ -77,6 +77,15 @@ protects build quality instead of just producing builds.
     forge-fire and kills, ash rings from cleanse zones and Wound of the World,
     corruption stains from defiled pools. Marks are capped and fade slowly.
 
+### Added — Sprite-sheet rendering (live, with normal-map lighting)
+- `Player` and every `EnemyBase` now call `CharSprite.try_make(id)` at spawn:
+  if `assets/sprites/<id>.json` + sheet exist, the character renders from the
+  sheet, state-driven (idle/walk/attack/windup/hurt/death/charge); otherwise
+  the procedural body is kept. No combat-code changes to migrate art.
+- Optional `<sheet>_n.png` normal maps are wired through a `CanvasTexture`, so
+  the game's `Light2D` pools light sprites in real 3-D relief (the HD-2D
+  lighting payoff). See `assets/sprites/README.md` for ids/format.
+
 ### Added — Durability & accessibility
 - Save versioning (`save_version`, migration table, pre-migration backup,
   field repair). Old saves load; a corrupt save fails visibly instead of
