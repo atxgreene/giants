@@ -54,6 +54,14 @@ body. No combat code changes when you add art.
 Override per character with `"offset": [x, y]` in the config if your art needs
 it.
 
+### Backgrounds / transparency
+Sheets should be **PNG with a transparent (alpha) background**. If a sheet is
+flattened onto a flat background (no alpha), set `"chroma_key": true` in its
+config to key out the desaturated background in-shader (tune with
+`"chroma_luma"` / `"chroma_sat"`). This is a stopgap — a real transparent
+export looks better around glows/fire and re-enables normal-map relief (the
+chroma-key path renders flat-lit, not normal-mapped).
+
 ### Normal maps (the HD-2D lighting payoff)
 Drop a second sheet named `<sheet>_n.png` (same grid) — e.g. `witness_n.png`
 beside `witness.png`. It's wired through a `CanvasTexture`, so the game's

@@ -13,8 +13,8 @@ class_name CharSprite
 ## procedural rendering. Nothing here is required to run the game.
 
 var cfg: Dictionary = {}
-var fw := 64
-var fh := 64
+var fw := 64.0
+var fh := 64.0
 var fps := 12.0
 var anims: Dictionary = {}
 var cur := ""
@@ -37,14 +37,26 @@ func _setup(character: String) -> bool:
 	if diffuse == null:
 		return false
 	var fsz: Array = cfg.get("frame_size", [64, 64])
-	fw = int(fsz[0])
-	fh = int(fsz[1])
+	fw = float(fsz[0])
+	fh = float(fsz[1])
 	fps = float(cfg.get("fps", 12))
 	anims = cfg.get("animations", {})
-	# Optional normal map for lit 3D-relief shading under Light2D.
 	var base := str(cfg.get("sheet", character + ".png")).get_basename()
 	var norm: Texture2D = Assets.texture(Assets.SPRITE_DIR + base + "_n.png")
-	if norm != null:
+	if bool(cfg.get("chroma_key", false)):
+		# The sheet has no alpha (flat background): key out the desaturated
+		# background in a shader, sparing the saturated gold/blue/fire pixels.
+		# (A transparent re-export looks better and restores normal-map relief.)
+		texture = diffuse
+		var mat := ShaderMaterial.new()
+		var sh := Shader.new()
+		sh.code = CHROMA_SHADER
+		mat.shader = sh
+		mat.set_shader_parameter("luma_min", float(cfg.get("chroma_luma", 0.80)))
+		mat.set_shader_parameter("sat_max", float(cfg.get("chroma_sat", 0.13)))
+		material = mat
+	elif norm != null:
+		# Optional normal map for lit 3D-relief shading under Light2D.
 		var ct := CanvasTexture.new()
 		ct.diffuse_texture = diffuse
 		ct.normal_texture = norm
@@ -54,8 +66,11 @@ func _setup(character: String) -> bool:
 	region_enabled = true
 	centered = true
 	# Feet at the node origin by default; override with "offset":[x,y] in config.
-	var off: Array = cfg.get("offset", [0, -fh / 2])
+	var off: Array = cfg.get("offset", [0, -fh / 2.0])
 	offset = Vector2(float(off[0]), float(off[1]))
+	# Display scale: art is authored larger than the ~64px gameplay scale.
+	var s := float(cfg.get("scale", 1.0))
+	scale = Vector2(s, s)
 	play("idle")
 	return true
 
@@ -111,3 +126,17 @@ func _apply() -> void:
 	var a: Dictionary = anims[cur]
 	var row := int(a.get("row", 0))
 	region_rect = Rect2(frame_i * fw, row * fh, fw, fh)
+
+const CHROMA_SHADER := "\
+shader_type canvas_item;\n\
+uniform float luma_min = 0.80;\n\
+uniform float sat_max = 0.13;\n\
+void fragment() {\n\
+	vec4 c = texture(TEXTURE, UV);\n\
+	float mx = max(c.r, max(c.g, c.b));\n\
+	float mn = min(c.r, min(c.g, c.b));\n\
+	if (mx > luma_min && (mx - mn) < sat_max) {\n\
+		c.a = 0.0;\n\
+	}\n\
+	COLOR = c;\n\
+}\n"
