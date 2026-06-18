@@ -1,15 +1,12 @@
 {
-  "sheet": "witness.png",
-  "normal": "witness_n.png",
+  "sheet": "witness_clean.png",
+  "normal": "witness_clean_n.png",
   "frame_size": [160, 160],
   "grid": { "cols": 8, "rows": 7 },
   "fps": 12,
-  "offset": [0, -84],
+  "offset": [0, -80],
   "pivot": "bottom_center",
   "scale": 0.42,
-  "chroma_key": true,
-  "chroma_luma": 0.80,
-  "chroma_sat": 0.13,
   "animations": {
     "idle":    { "row": 0, "cols": 6, "frames": 1, "indices": [0], "loop": true,  "mode": "pose" },
     "walk":    { "row": 1, "cols": 8, "frames": 1, "indices": [3], "loop": true,  "mode": "pose" },

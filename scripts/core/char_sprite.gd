@@ -32,6 +32,7 @@ class_name CharSprite
 var cfg: Dictionary = {}
 var fw := 64.0
 var fh := 64.0
+var inset := 0.0      # crop margin to avoid neighbour-cell bleed on dirty sheets
 var fps := 12.0
 var anims: Dictionary = {}
 var cur := ""
@@ -87,6 +88,7 @@ func _setup(character: String) -> bool:
 		offset = Vector2(0, off_y)
 	var s := float(cfg.get("scale", 1.0))
 	scale = Vector2(s, s)
+	inset = float(cfg.get("inset", 0.0))
 	play("idle")
 	return true
 
@@ -172,7 +174,7 @@ func _apply() -> void:
 	var a: Dictionary = anims[cur]
 	var row := int(a.get("row", 0))
 	var col := _current_col()
-	region_rect = Rect2(col * fw, row * fh, fw, fh)
+	region_rect = Rect2(col * fw + inset, row * fh + inset, fw - 2.0 * inset, fh - 2.0 * inset)
 
 func _current_col() -> int:
 	var a: Dictionary = anims[cur]
