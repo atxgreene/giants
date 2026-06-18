@@ -112,21 +112,7 @@ func ring(pos: Vector2, color: Color, r_from: float, r_to: float, dur := 0.4) ->
 ## from the Eye, and a warm/cool grade — on top of the existing vignette. Add
 ## once per screen; everything is freed with the screen.
 func attach_atmosphere(parent: Node, kind := "desert") -> void:
-	if bool(Game.setting("bloom")):
-		var env := Environment.new()
-		env.background_mode = Environment.BG_CANVAS
-		env.glow_enabled = true
-		env.glow_intensity = 0.5
-		env.glow_strength = 1.05
-		env.glow_bloom = 0.12
-		env.glow_blend_mode = Environment.GLOW_BLEND_MODE_SCREEN
-		env.glow_hdr_threshold = 0.92
-		env.set_glow_level(1, 1.0)
-		env.set_glow_level(3, 1.0)
-		env.set_glow_level(5, 1.0)
-		var we := WorldEnvironment.new()
-		we.environment = env
-		parent.add_child(we)
+	attach_bloom(parent)
 	attach_vignette(parent)
 	var layer := CanvasLayer.new()
 	layer.layer = 54
@@ -136,6 +122,26 @@ func attach_atmosphere(parent: Node, kind := "desert") -> void:
 	atmo.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	layer.add_child(atmo)
 	parent.add_child(layer)
+
+## Additive screen bloom only (HD-2D glow), gated by the Bloom setting so it can
+## never black-screen. Safe to add over UI — used on the main menu.
+func attach_bloom(parent: Node) -> void:
+	if not bool(Game.setting("bloom")):
+		return
+	var env := Environment.new()
+	env.background_mode = Environment.BG_CANVAS
+	env.glow_enabled = true
+	env.glow_intensity = 0.5
+	env.glow_strength = 1.05
+	env.glow_bloom = 0.12
+	env.glow_blend_mode = Environment.GLOW_BLEND_MODE_SCREEN
+	env.glow_hdr_threshold = 0.92
+	env.set_glow_level(1, 1.0)
+	env.set_glow_level(3, 1.0)
+	env.set_glow_level(5, 1.0)
+	var we := WorldEnvironment.new()
+	we.environment = env
+	parent.add_child(we)
 
 ## Screen-space vignette + warm grade for the 2.5D look. Add once per screen.
 func attach_vignette(parent: Node) -> void:

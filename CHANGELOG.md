@@ -57,7 +57,8 @@ protects build quality instead of just producing builds.
   remakes): screen-space **bloom** on the gold/fire/holy elements (HDR-2D +
   additive WorldEnvironment glow, toggle-gated so it can never black-screen),
   a **tilt-shift** depth blur top and bottom, drifting **light shafts** from
-  the Eye, and a warm/cool color grade. New "Bloom / HD-2D Glow" setting.
+  the Eye, and a warm/cool color grade. Applied to the main menu (bloom +
+  shafts), hub, and run. New "Bloom / HD-2D Glow" setting.
 
 ### Added — Durability & accessibility
 - Save versioning (`save_version`, migration table, pre-migration backup,

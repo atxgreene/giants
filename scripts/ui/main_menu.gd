@@ -24,6 +24,7 @@ func _ready() -> void:
 	backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
 	backdrop.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(backdrop)
+	FX.attach_bloom(self)
 	var root := UIKit.center()
 	add_child(root)
 	var menu_panel := PanelContainer.new()
@@ -91,6 +92,16 @@ class SigilBackdrop extends Control:
 			# keep only the living elements (embers + a faint seal ring).
 			draw_rect(Rect2(Vector2.ZERO, size), Color(0.03, 0.02, 0.05, 0.45))
 			draw_rect(Rect2(0, size.y * 0.55, size.x, size.y * 0.45), Color(0.03, 0.02, 0.05, 0.25))
+			# drifting HD-2D light shafts from above (beneath the menu UI)
+			var src := Vector2(size.x * 0.5, -size.y * 0.1)
+			for s in 4:
+				var sway := sin(t * 0.12 + float(s) * 1.7) * size.x * 0.04
+				var x_mid := size.x * 0.5 + sway + (float(s) - 1.5) * size.x * 0.16
+				var sw := size.x * 0.06
+				var sc := Color(1.0, 0.72, 0.4, 0.05 + 0.02 * sin(t * 0.7 + float(s)))
+				draw_colored_polygon(PackedVector2Array([
+					src + Vector2(-6, 0), src + Vector2(6, 0),
+					Vector2(x_mid + sw, size.y), Vector2(x_mid - sw, size.y)]), sc)
 			var cc := size * 0.5
 			var faint := Color(0.85, 0.72, 0.38, 0.1)
 			draw_arc(cc, 305.0, 0, TAU, 64, faint, 1.5)
