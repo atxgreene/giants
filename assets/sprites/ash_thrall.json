@@ -1,0 +1,13 @@
+{
+  "sheet": "ash_thrall_clean.png",
+  "frame_size": [160, 160],
+  "grid": { "cols": 4, "rows": 1 },
+  "fps": 10,
+  "offset": [0, -80],
+  "pivot": "bottom_center",
+  "scale": 0.42,
+  "animations": {
+    "idle": { "row": 0, "indices": [1], "mode": "pose", "loop": true },
+    "walk": { "row": 0, "indices": [0, 1, 2, 3], "mode": "sequence", "loop": true }
+  }
+}
