@@ -10,21 +10,28 @@ extends Node
 ## Nothing here requires any binary asset to exist — every lookup degrades to
 ## "use the procedural renderer".
 ##
-## Per-character config: assets/sprites/<character>.json, e.g.
+## Per-character config: assets/sprites/<character>.json — the sprite contract
+## read by CharSprite (see assets/sprites/README.md). Uniform grid; cell size is
+## derived from grid x the actual texture; `indices` pick columns; `mode` is
+## "pose" (hold indices[0]) or "sequence" (step indices). e.g.:
 ## {
-##   "sheet": "witness.png",          # sprite sheet in assets/sprites/
-##   "frame_size": [64, 64],
+##   "sheet": "witness_clean.png",
+##   "normal": "witness_clean_n.png",     # optional -> Light2D relief
+##   "frame_size": [160, 160],            # contract hint; grid wins for cropping
+##   "grid": { "cols": 8, "rows": 7 },
 ##   "fps": 12,
+##   "offset": [0, -80], "pivot": "bottom_center",
+##   "scale": 0.42,                       # display scale to ~64px gameplay size
+##   "chroma_key": false,                 # true keys a flat bg (no-alpha sheets)
+##   "inset": 0,                          # crop margin to avoid edge bleed
 ##   "animations": {
-##     "idle":   {"row": 0, "frames": 4, "loop": true},
-##     "walk":   {"row": 1, "frames": 6, "loop": true},
-##     "attack": {"row": 2, "frames": 5, "loop": false},
-##     "windup": {"row": 3, "frames": 3, "loop": false},
-##     "hurt":   {"row": 4, "frames": 2, "loop": false},
-##     "death":  {"row": 5, "frames": 6, "loop": false},
-##     "special":{"row": 6, "frames": 5, "loop": false}
+##     "idle":   { "row": 0, "indices": [0],       "mode": "pose",     "loop": true },
+##     "walk":   { "row": 1, "indices": [3],       "mode": "pose",     "loop": true },
+##     "attack": { "row": 2, "indices": [2,3,4],   "mode": "sequence", "loop": false },
+##     "death":  { "row": 5, "indices": [0,1,2,3], "mode": "sequence", "loop": false }
 ##   }
 ## }
+## Coherent per-action strips (enemies) can use "sequence" for idle/walk too.
 
 const SPRITE_DIR := "res://assets/sprites/"
 const VFX_DIR := "res://assets/vfx/"

@@ -89,8 +89,36 @@ func _setup(character: String) -> bool:
 	var s := float(cfg.get("scale", 1.0))
 	scale = Vector2(s, s)
 	inset = float(cfg.get("inset", 0.0))
+	_validate_manifest()
 	play("idle")
 	return true
+
+func _validate_manifest() -> void:
+	# Generated enemy manifests will have mistakes — guard rows/cols/indices so a
+	# bad entry warns and clamps rather than crashing or cropping garbage.
+	var grid: Dictionary = cfg.get("grid", {})
+	var cols := int(grid.get("cols", 0))   # 0 = unknown -> skip bound check
+	var rows := int(grid.get("rows", 0))
+	for name in anims.keys():
+		var a: Dictionary = anims[name]
+		var row := int(a.get("row", 0))
+		if rows > 0 and (row < 0 or row >= rows):
+			push_warning("CharSprite '%s' anim '%s': row %d out of range (rows=%d)" % [str(cfg.get("sheet", "?")), name, row, rows])
+		if not a.has("indices") or (a["indices"] as Array).is_empty():
+			push_warning("CharSprite anim '%s' has no indices; defaulting to [0]" % name)
+			a["indices"] = [0]
+		if cols > 0:
+			var fixed: Array = []
+			var bad := false
+			for col in a["indices"]:
+				var ci := int(col)
+				if ci < 0 or ci >= cols:
+					bad = true
+					ci = clampi(ci, 0, cols - 1)
+				fixed.append(ci)
+			if bad:
+				push_warning("CharSprite anim '%s': column(s) out of range (cols=%d) — clamped" % [name, cols])
+				a["indices"] = fixed
 
 func _setup_texture(diffuse: Texture2D, character: String) -> void:
 	var norm_name := str(cfg.get("normal", str(cfg.get("sheet", character + ".png")).get_basename() + "_n.png"))
@@ -115,12 +143,14 @@ func _setup_texture(diffuse: Texture2D, character: String) -> void:
 		texture = diffuse
 
 func play(anim_name: String) -> void:
-	if anim_name == cur:
-		return
+	# Resolve fallback BEFORE the early-return, so e.g. play("dash") (which
+	# falls back to "walk") doesn't reset the current "walk" every frame.
 	var resolved := anim_name
 	if not anims.has(resolved):
 		resolved = _fallback(resolved)
 	if not anims.has(resolved):
+		return
+	if resolved == cur:
 		return
 	cur = resolved
 	frame_i = 0
