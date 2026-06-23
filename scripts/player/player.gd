@@ -150,8 +150,11 @@ func _physics_process(delta: float) -> void:
 		ghost_tick -= delta
 		if ghost_tick <= 0.0:
 			ghost_tick = 0.035
-			FX.ghost(global_position, facing,
-				Color(1.0, 0.6, 0.25) if RunState.has_mod("flame_trail") else Color(0.5, 0.6, 0.9))
+			# Procedural afterimages draw the code-built body — they clash with a
+			# sprite, so only spawn them when rendering procedurally.
+			if sprite == null:
+				FX.ghost(global_position, facing,
+					Color(1.0, 0.6, 0.25) if RunState.has_mod("flame_trail") else Color(0.5, 0.6, 0.9))
 		if RunState.has_mod("flame_trail"):
 			trail_tick -= delta
 			if trail_tick <= 0.0:
@@ -159,8 +162,8 @@ func _physics_process(delta: float) -> void:
 				GroundHazard.spawn(get_parent(), global_position,
 					{"kind": "pool", "radius": 26.0, "active": 1.4, "dps": 14.0,
 					 "friendly": true, "color": Color(1.0, 0.55, 0.15)})
-	# sword trail ribbon
-	if swing_vis > 0.0 or dashing:
+	# sword trail ribbon — anchored to the procedural sword tip; skip for sprites.
+	if sprite == null and (swing_vis > 0.0 or dashing):
 		trail.append({"p": _sword_tip_global(), "t": 0.18})
 	for seg in trail:
 		seg["t"] -= delta
