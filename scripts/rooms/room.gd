@@ -595,6 +595,12 @@ class Gate extends Node2D:
 		l.size = Vector2(180, 20)
 		l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 		add_child(l)
+		# A real light so the gate reads as a beacon from clear across the arena,
+		# even when it sits at the far edge and the player is at the spawn side.
+		if bool(Game.setting("bloom")):
+			var beam := FX.make_emissive_light(color, 0.9, 2.6, true)
+			beam.position = Vector2(0, -60)
+			add_child(beam)
 
 	func _process(delta: float) -> void:
 		anim += delta
@@ -602,6 +608,15 @@ class Gate extends Node2D:
 
 	func _draw() -> void:
 		var pulse := 0.7 + 0.3 * sin(anim * 4.0)
+		# A tall column of light rising from the portal — the visual landmark a
+		# player scans for from across the room. Fades out as it climbs.
+		var beam := color
+		for i in 7:
+			var k := float(i) / 7.0
+			beam.a = (0.22 - k * 0.16) * pulse
+			var hw := lerpf(26.0, 8.0, k)
+			var y := -54.0 - k * 230.0
+			draw_rect(Rect2(-hw, y, hw * 2.0, -(230.0 / 7.0) - 2.0), beam)
 		# pillars
 		var stone := Color(0.16, 0.14, 0.18)
 		draw_rect(Rect2(-30, -54, 10, 64), stone)
@@ -616,6 +631,8 @@ class Gate extends Node2D:
 		# reward sigil
 		draw_circle(Vector2(0, -20), 8.0 + 2.0 * pulse, g)
 		draw_circle(Vector2(0, -20), 4.0, Color(1, 1, 1, 0.8))
+		# Floor ring so the destination is unmistakable on the ground plane.
+		draw_arc(Vector2(0, 6), 30.0 + 3.0 * pulse, 0.0, TAU, 24, Color(g.r, g.g, g.b, 0.5 * pulse), 2.0)
 
 class InteractPoint extends Node2D:
 	var prompt := "Interact"

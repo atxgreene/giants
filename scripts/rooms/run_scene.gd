@@ -164,6 +164,10 @@ func _open_exit_gates() -> void:
 		return
 	var options: Array = director.gate_options(idx, RunState.has_mod("extra_choice"))
 	room.open_gates(options)
+	# The gates open on the far (east) side of the arena, which can sit past the
+	# screen edge in a wide room — tell the Witness where the road continues.
+	var word := "A way forward opens to the east." if options.size() == 1 else "The ways forward open to the east — choose your road."
+	Game.toast(word, Color(0.85, 0.78, 0.5))
 
 # ------------------------------------------------------------- rewards
 
