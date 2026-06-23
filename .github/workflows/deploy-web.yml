@@ -35,7 +35,10 @@ jobs:
       - name: Stamp build version (lets the menu show which build is live)
         run: |
           mkdir -p assets
-          printf '{"sha":"%s","ref":"%s"}' "${GITHUB_SHA:0:7}" "${GITHUB_REF_NAME}" > assets/build_info.json
+          # The godot-ci container's default shell is dash (sh), which lacks the
+          # bash substring `${VAR:0:7}` — use cut so this stays POSIX-portable.
+          SHA=$(echo "$GITHUB_SHA" | cut -c1-7)
+          printf '{"sha":"%s","ref":"%s"}' "$SHA" "$GITHUB_REF_NAME" > assets/build_info.json
           cat assets/build_info.json
 
       - name: Import assets (fails on parse/compile errors)
