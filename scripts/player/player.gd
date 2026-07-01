@@ -162,8 +162,8 @@ func _physics_process(delta: float) -> void:
 				GroundHazard.spawn(get_parent(), global_position,
 					{"kind": "pool", "radius": 26.0, "active": 1.4, "dps": 14.0,
 					 "friendly": true, "color": Color(1.0, 0.55, 0.15)})
-	# sword trail ribbon — anchored to the procedural sword tip; skip for sprites.
-	if sprite == null and (swing_vis > 0.0 or dashing):
+	# sword trail ribbon — anchored to the sword tip (procedural or sprite-scaled).
+	if (swing_vis > 0.0 or dashing):
 		trail.append({"p": _sword_tip_global(), "t": 0.18})
 	for seg in trail:
 		seg["t"] -= delta
@@ -656,11 +656,29 @@ func _sword_angle() -> float:
 
 func _sword_tip_global() -> Vector2:
 	var bob := _bob()
-	var hand := Vector2(12 * facing, -10 + bob)
-	return global_position + hand + Vector2.from_angle(_sword_angle()) * 34.0
+	# Match the weapon anchor/length used for whichever body is rendering.
+	var hand := Vector2(15 * facing, -34 + bob) if sprite != null else Vector2(12 * facing, -10 + bob)
+	var length := 46.0 if sprite != null else 34.0
+	return global_position + hand + Vector2.from_angle(_sword_angle()) * length
 
 func _bob() -> float:
 	return sin(anim_t * 9.0) * (1.8 if velocity.length() > 20.0 else 0.6)
+
+func _draw_weapon_overlay() -> void:
+	# Weapon drawn over the sprite (the art carries no blade). Anchored to the
+	# sprite's sword hand — higher and longer than the small procedural body so
+	# it reads at the sprite's scale. During a swing the angle sweeps via
+	# _sword_angle(), so this is the visible attack animation.
+	if dead:
+		return
+	var bob := _bob()
+	var hand := Vector2(15 * facing, -34 + bob)
+	# upper arm from the shoulder to the grip, so the weapon looks held
+	draw_line(Vector2(7 * facing, -44 + bob), hand, Color(0.85, 0.72, 0.58, 0.9), 3.2)
+	if weapon_style == "censer":
+		_draw_censer(hand)
+	else:
+		Painter.blade(self, hand, _sword_angle(), 46.0, anim_t)
 
 func _draw_censer(hand: Vector2) -> void:
 	# A chain swinging a glowing brazier — reach and arc over the sword's point.
@@ -700,6 +718,9 @@ func _draw() -> void:
 				var a2 := to_local(trail[i + 1]["p"])
 				var k := float(trail[i]["t"]) / 0.18
 				draw_line(a1, a2, Color(1.0, 0.75, 0.3, 0.45 * k), 2.0 + 4.0 * k)
+		# The sprite art has no weapon painted in — draw the Witness's blade (or
+		# censer) over it so attacks read as a real sword swing, not just a burst.
+		_draw_weapon_overlay()
 		if not dead and ult_charge >= 100.0:
 			Painter.glow(self, Vector2(0, -14), 30.0, Color(1.0, 0.95, 0.6, 0.3 + 0.1 * sin(anim_t * 6.0)), 3)
 			Painter.rune_ring(self, Vector2(0, -14), 24.0 + sin(anim_t * 6.0) * 2.0, Color(1.0, 0.9, 0.55, 0.5), 6, anim_t * 2.0, 1.2)

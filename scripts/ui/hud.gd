@@ -183,6 +183,7 @@ class HudDraw extends Control:
 					draw_circle(Vector2(x, size.y - 12), 5.0, Color(0.7, 0.5, 0.9))
 					draw_arc(Vector2(x, size.y - 12), 5.0, 0, TAU, 10, Color(0, 0, 0, 0.5), 1.0)
 					x += 17.0
+			_draw_gate_waypoints(player)
 		# --- seals, top-right ---
 		var seals := int(Game.profile.get("seals", 0))
 		var sc := Vector2(size.x - 150, 26)
@@ -219,6 +220,49 @@ class HudDraw extends Control:
 				for i in 3:
 					var col := Color(0.95, 0.8, 0.45) if i < phase else Color(0.3, 0.28, 0.25)
 					_diamond(Vector2(bx + bw - 40 + i * 16, 10), 5.0, col)
+
+	func _draw_gate_waypoints(player) -> void:
+		# Persistent marker for each open exit gate: an on-screen dot when the gate
+		# is visible, or an arrow pinned to the screen edge pointing toward it when
+		# it is off-screen (the gates open at the far wall, often out of view).
+		var gates := get_tree().get_nodes_in_group("gate")
+		if gates.is_empty():
+			return
+		var xf := get_viewport().get_canvas_transform()
+		var margin := 46.0
+		var rect := Rect2(Vector2(margin, margin), size - Vector2(margin, margin) * 2.0)
+		var center := size * 0.5
+		for g in gates:
+			if not is_instance_valid(g):
+				continue
+			var col: Color = g.get("color") if g.get("color") != null else GOLD
+			var sp := xf * (g.global_position + Vector2(0, -36))  # portal arch, not the base
+			if rect.has_point(sp):
+				# On screen: a soft pulsing ring so the eye lands on the doorway.
+				var p := 0.6 + 0.4 * sin(anim * 4.0)
+				draw_arc(sp, 20.0 + 3.0 * p, 0, TAU, 24, Color(col.r, col.g, col.b, 0.5 * p), 2.0)
+				continue
+			# Off screen: clamp the direction to the screen edge, draw an arrow.
+			var dir := (sp - center)
+			if dir.length() < 1.0:
+				continue
+			dir = dir.normalized()
+			# Find where the ray from screen center exits the marker box.
+			var t := 1.0e20
+			if absf(dir.x) > 0.001:
+				t = minf(t, maxf((rect.position.x - center.x) / dir.x, (rect.end.x - center.x) / dir.x))
+			if absf(dir.y) > 0.001:
+				t = minf(t, maxf((rect.position.y - center.y) / dir.y, (rect.end.y - center.y) / dir.y))
+			var mp := center + dir * t
+			var pulse := 0.6 + 0.4 * sin(anim * 5.0)
+			# arrowhead pointing outward toward the gate
+			var n := dir.orthogonal()
+			var tip := mp + dir * 16.0
+			draw_colored_polygon(PackedVector2Array([tip, mp - dir * 4.0 + n * 9.0, mp - dir * 4.0 - n * 9.0]),
+				Color(col.r, col.g, col.b, 0.85 * pulse))
+			draw_circle(mp - dir * 10.0, 4.0, Color(col.r, col.g, col.b, 0.9))
+			draw_string(ThemeDB.fallback_font, mp - dir * 10.0 + Vector2(-30, 22),
+				"exit", HORIZONTAL_ALIGNMENT_CENTER, 60, 11, Color(col.r, col.g, col.b, 0.85))
 
 	func _ability(pos: Vector2, glyph: String, frac: float, col: Color, font: Font, hint: String) -> void:
 		frac = clampf(frac, 0.0, 1.0)

@@ -585,6 +585,7 @@ class Gate extends Node2D:
 
 	func _ready() -> void:
 		z_index = -2
+		add_to_group("gate")   # HUD waypoint arrows find open gates via this group
 		var l := Label.new()
 		l.text = label_text
 		l.add_theme_font_size_override("font_size", 13)
