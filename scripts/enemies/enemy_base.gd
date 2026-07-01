@@ -94,6 +94,11 @@ func _ready() -> void:
 	sprite = CharSprite.try_make(id)
 	if sprite != null:
 		add_child(sprite)
+	# Status (HP bar, mark, binding) draws on a child that sits ABOVE the sprite
+	# — drawn on the enemy's own canvas it would be hidden behind the sprite.
+	var status := StatusBar.new()
+	status.z_index = 6
+	add_child(status)
 
 func _physics_process(delta: float) -> void:
 	anim_t += delta
@@ -407,7 +412,6 @@ func _draw() -> void:
 		if elite and not dead:
 			Painter.rune_ring(self, Vector2.ZERO, hit_radius + 12.0,
 				Color(0.95, 0.8, 0.35, 0.45 + 0.15 * sin(anim_t * 4.0)), 8, anim_t * 1.2, 1.4)
-		_draw_status()
 		return
 	if state == "spawn" and not dead:
 		# rise out of the sand: scale in + dust offset
@@ -431,30 +435,41 @@ func _draw() -> void:
 	if elite and not dead:
 		Painter.rune_ring(self, Vector2.ZERO, hit_radius + 12.0,
 			Color(0.95, 0.8, 0.35, 0.45 + 0.15 * sin(anim_t * 4.0)), 8, anim_t * 1.2, 1.4)
-	_draw_status()
 
-func _draw_status() -> void:
-	if dead:
-		return
-	# HP bar
-	if hp < max_hp:
-		var w := maxf(hit_radius * 2.2, 26.0)
-		var y := -hit_radius * 2.0 - 8.0
-		draw_rect(Rect2(-w / 2, y, w, 4), Color(0, 0, 0, 0.6))
-		var frac := clampf(hp / max_hp, 0.0, 1.0)
-		var bar_col := Color(0.85, 0.25, 0.2) if not elite else Color(0.95, 0.75, 0.3)
-		draw_rect(Rect2(-w / 2, y, w * frac, 4), bar_col)
-	if marked_t > 0.0:
-		var mc := Color(0.45, 0.75, 1.0, 0.9)
-		var my := -hit_radius * 2.0 - 18.0
-		draw_colored_polygon(PackedVector2Array([
-			Vector2(0, my - 5), Vector2(4, my), Vector2(0, my + 5), Vector2(-4, my)]), mc)
-	if bound_t > 0.0:
-		var gold := Color(0.95, 0.85, 0.5, 0.8)
-		draw_arc(Vector2.ZERO, hit_radius + 6.0, 0, TAU, 24, gold, 2.5)
-		for i in 6:
-			var a := TAU * i / 6.0 + anim_t * 2.0
-			draw_line(Vector2.from_angle(a) * (hit_radius + 2.0), Vector2.from_angle(a) * (hit_radius + 10.0), gold, 2.0)
+## HP bar, mark, and binding ring — drawn on a child that renders on top of the
+## sprite (the enemy's own _draw is behind its sprite child) and above the head.
+class StatusBar extends Node2D:
+	func _process(_delta: float) -> void:
+		queue_redraw()
+
+	func _draw() -> void:
+		var e = get_parent()
+		if e == null or not is_instance_valid(e) or e.dead:
+			return
+		var hr: float = e.hit_radius
+		# Sit clearly above the head: use the sprite's display height when present,
+		# otherwise the procedural body's radius.
+		var top := -hr * 2.0 - 8.0
+		if e.sprite != null:
+			top = -e.sprite.fh * e.sprite.scale.y * 0.98 - 6.0
+		if e.hp < e.max_hp:
+			var w: float = maxf(hr * 2.2, 26.0)
+			draw_rect(Rect2(-w / 2.0, top, w, 4.0), Color(0, 0, 0, 0.6))
+			var frac: float = clampf(e.hp / e.max_hp, 0.0, 1.0)
+			var bar_col: Color = Color(0.95, 0.75, 0.3) if e.elite else Color(0.85, 0.25, 0.2)
+			draw_rect(Rect2(-w / 2.0, top, w * frac, 4.0), bar_col)
+			draw_rect(Rect2(-w / 2.0, top, w, 4.0), Color(0.9, 0.85, 0.7, 0.35), false, 1.0)
+		if e.marked_t > 0.0:
+			var mc := Color(0.45, 0.75, 1.0, 0.9)
+			var my: float = top - 10.0
+			draw_colored_polygon(PackedVector2Array([
+				Vector2(0, my - 5), Vector2(4, my), Vector2(0, my + 5), Vector2(-4, my)]), mc)
+		if e.bound_t > 0.0:
+			var gold := Color(0.95, 0.85, 0.5, 0.8)
+			draw_arc(Vector2.ZERO, hr + 6.0, 0, TAU, 24, gold, 2.5)
+			for i in 6:
+				var a: float = TAU * i / 6.0 + e.anim_t * 2.0
+				draw_line(Vector2.from_angle(a) * (hr + 2.0), Vector2.from_angle(a) * (hr + 10.0), gold, 2.0)
 
 func _telegraph_color() -> Color:
 	# Default danger red, but accessibility settings can swap to a
