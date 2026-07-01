@@ -41,7 +41,8 @@ const DEFAULT_PROFILE := {
 		"damage_numbers": true, "screenshake": true, "fullscreen": false,
 		"screenshake_amount": 1.0, "flash_amount": 1.0, "text_scale": 1.0,
 		"high_contrast": false, "colorblind_telegraphs": false,
-		"hold_to_dash": false, "auto_aim_assist": true, "bloom": true
+		"hold_to_dash": false, "auto_aim_assist": true, "bloom": true,
+		"touch_controls": "auto"
 	}
 }
 
@@ -53,8 +54,23 @@ func _ready() -> void:
 	if load_warning != "":
 		push_warning("[save] " + load_warning)
 	apply_settings()
-	if DisplayServer.is_touchscreen_available():
+	# Touch detection: a hardware touchscreen, or a mobile browser (the web
+	# export often reports touches only as emulated mouse, so is_touchscreen
+	# alone misses phones — check the mobile-web features too).
+	if DisplayServer.is_touchscreen_available() or OS.has_feature("mobile") \
+			or OS.has_feature("web_android") or OS.has_feature("web_ios"):
 		touch_mode = true
+
+## Whether the on-screen touch UI should be shown, honouring the player's
+## explicit override ("on"/"off") and otherwise auto-detecting a touch device.
+func touch_ui_active() -> bool:
+	match str(setting("touch_controls")):
+		"on":
+			return true
+		"off":
+			return false
+		_:
+			return touch_mode
 
 func _input(event: InputEvent) -> void:
 	# A real finger means a touch device; mouse emulated from touch never

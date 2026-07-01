@@ -35,6 +35,8 @@ func _ready() -> void:
 	v.add_child(_check_row("Hold to Dash", "hold_to_dash"))
 	v.add_child(_check_row("Touch Auto-Aim Assist", "auto_aim_assist"))
 	v.add_child(UIKit.label("— CONTROLS —", 14, UIKit.GOLD))
+	v.add_child(_cycle_row("On-Screen Touch Controls", "touch_controls",
+		["auto", "on", "off"], ["Auto (detect)", "Always On", "Off"]))
 	v.add_child(_control_map())
 	var back := UIKit.button("Back", 18)
 	back.pressed.connect(queue_free)
@@ -92,6 +94,27 @@ func _check_row(label_text: String, key: String) -> HBoxContainer:
 	c.button_pressed = bool(Game.setting(key))
 	c.toggled.connect(func(on: bool): Game.set_setting(key, on))
 	h.add_child(c)
+	return h
+
+func _cycle_row(label_text: String, key: String, values: Array, labels: Array) -> HBoxContainer:
+	# A tap-to-cycle option for a string setting (e.g. auto/on/off).
+	var h := UIKit.hbox(12)
+	var l := UIKit.label(label_text, 16)
+	l.custom_minimum_size = Vector2(220, 0)
+	h.add_child(l)
+	var start := values.find(str(Game.setting(key)))
+	if start < 0:
+		start = 0
+	var btn := UIKit.button(str(labels[start]), 15)
+	btn.custom_minimum_size = Vector2(170, 0)
+	btn.pressed.connect(func():
+		# Read the live value each press so state stays correct regardless of
+		# lambda capture semantics.
+		var cur := values.find(str(Game.setting(key)))
+		var nxt := (cur + 1) % values.size()
+		btn.text = str(labels[nxt])
+		Game.set_setting(key, values[nxt]))
+	h.add_child(btn)
 	return h
 
 func _unhandled_input(event: InputEvent) -> void:

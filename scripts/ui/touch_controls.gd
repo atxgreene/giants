@@ -35,7 +35,7 @@ func _ready() -> void:
 	add_child(draw_node)
 
 func _process(_delta: float) -> void:
-	visible = Game.touch_mode and not get_tree().paused
+	visible = Game.touch_ui_active() and not get_tree().paused
 	if not visible and stick_id != -1:
 		_reset_stick()
 
